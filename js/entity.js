@@ -1,92 +1,82 @@
 class Entity{
 
-  constructor(x, y, w, h){
-    this.position = new Vector(x, y, 0.0);
+  constructor(_x, _y, _w, _h){
+    this.box = (new Shape(_x, _y, 0.0, 0.0)).makeRectangle(_w, _h);
     this.velocity = new Vector();
-    this.collision = new Vector(w, h, 0);
-    this.theta = 0;
 
 
     this.coordSystem = new Array(2);
     this.isJumping = false;
   };
 
+  get position(){ return this.box.position; };
+
   jump(){
-    if(!this.isJumping){
-      this.isJumping = true;
+    if(this.isJumping < 0){
+      this.isJumping = 10;
       this.velocity.add(this.coordSystem[1].clone().scale(30.0));
     }
   }
 
   draw(ctx){
-
-    ctx.save();
-      ctx.beginPath();
-
-      ctx.translate(this.position.x, this.position.y);
-      ctx.rotate(this.theta);
-      ctx.translate(-this.collision.x, -this.collision.y);
-
-      ctx.rect(0, 0, this.collision.x * 0.5, this.collision.y * 0.5);
-      ctx.rect(this.collision.x, 0, this.collision.x * 0.5, this.collision.y * 0.5);
-
-      ctx.rect(0, 0, 2 * this.collision.x, 2 * this.collision.y);
-      ctx.strokeStyle = "red";
-      ctx.stroke();
-    ctx.restore();
+    this.box.draw(ctx);
   };
 
   intersect(floor){
     // Vector 1
-    let v1 = getEdgesVector(this);
-    let v2 = getEdgesVector(floor);
+    let v1 = this.box.getEdgesVector();
+    let v2 = floor.getEdgesVector();
 
-    let axies = getCoordSystem(v2, v1);
+    let axies = (new Array()).concat(this.box.normals, floor.normals);
 
     let total_shadow = 0;
-    let idx = -1, minforce = 1000000;
+    let idx = -1, min_distance = 1000000;
     for(let i = 0; i < axies.length; ++i){
-      let pj1 = new Array(4);
-      let pj2 = new Array(4);
-      for(let j = 0; j < 4; ++j){
-        pj1[j] = axies[i].dot(v2[j]);
-        pj2[j] = axies[i].dot(v1[j]);
+      let pj1 = new Array(v1.length), pj2 = new Array(v2.length);
+      for(let j = 0; j < v1.length; ++j){
+        pj1[j] = axies[i].dot(v1[j]);
       }
+      for(let j = 0; j < v2.length; ++j){
+        pj2[j] = axies[i].dot(v2[j]);
+      }
+
       let pj1min = Math.min(...pj1), pj1max = Math.max(...pj1);
       let pj2min = Math.min(...pj2), pj2max = Math.max(...pj2);
 
-      if(pj2min <= pj1max && pj2max >= pj1min){
+      if(pj1min <= pj2max && pj2min <= pj1max){
         ++total_shadow;
-        let force = (pj2min < pj1min) ? (pj1min - pj2max) : (pj1max - pj2min);
-        if(force * force < minforce * minforce){
+        let distance = (pj2min < pj1min) ? (pj1min - pj2max) : (pj1max - pj2min);
+        if(distance * distance < min_distance * min_distance && Math.abs(distance) > distance){
           idx = i;
-          minforce = force;
+          min_distance = distance;
         }
       }
     }
-    if(total_shadow >> 2){ // iff t = 4 <=> t >> 2 == 1 cuz t <= 4
-      floor.is = true;
-      this.position.add(axies[idx].clone().scale(minforce));
+
+    if(total_shadow == axies.length){
+      this.position.add(axies[idx].clone().scale(Math.abs(min_distance)));
     }
     return total_shadow;
   };
 
   nearest_side(floor){
-    let v2 = getEdgesVector(floor);
-    let dl = [
-      getDistanceSegment(v2[0], v2[1], this.position), // Left
-      getDistanceSegment(v2[3], v2[2], this.position), // Right
-      getDistanceSegment(v2[1], v2[3], this.position), // Bottom
-      getDistanceSegment(v2[2], v2[0], this.position), // Top
-    ];
-    let bg = 0;
+    let v2 = floor.getEdgesVector();
+    let dl = new Array(v2.length);
+    for(let i = 0; i < v2.length - 1; ++i){
+      dl[i] = getDistanceSegment(v2[i], v2[i + 1], this.box.position);
+    }
+    dl[v2.length - 1] = getDistanceSegment(v2[v2.length - 1], v2[0], this.box.position);
+
+    let k = 0;
     for(let i = 1; i < dl.length; ++i){
-      if(dl[bg].ds > dl[i].ds){
-        bg = i;
+      if(dl[i].ds < dl[k].ds){
+        k = i;
       }
     }
-    let base_vector = dl[bg].vc.normalize();
-    return [base_vector, base_vector.perpendicular()];
+    let x = dl[k].vc.normalize().scale(-1);
+    //let y = x.dot(v2[k].mid(v2[(k + 1) % dl.length]).normalize());
+    //console.log(y);
+    return [x, x.perpendicular()];
   }
 
   update(floor){
@@ -96,6 +86,7 @@ class Entity{
 
     let touching_floor = false;
     floor.forEach((e, i)=>{
+      e.is = false;
       const dx = e.position.x - this.position.x;
       const dy = e.position.y - this.position.y;
       const ds = dx * dx + dy * dy;
@@ -107,26 +98,26 @@ class Entity{
         object = e;
       }
 
-      touching_floor |= num_intersection >> 2;
-      e.is = false;
+      touching_floor |= num_intersection == (e.collision.length + 4);
     });
+
+    let friction = 0.90;
+    if(touching_floor){
+      --this.isJumping;
+      friction = 0.80;
+    }
+    this.velocity.scale(friction);
 
     this.coordSystem = this.nearest_side(object);
 
     // angle
     let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
-    this.theta += shortestAngle(this.theta, angle) * 0.10;
-    this.velocity.subtract(this.coordSystem[1].clone());
+    this.box.theta += shortestAngle(this.box.theta, angle) * 0.10;
 
-    let friction = 0.93;
-    if(touching_floor){
-      this.isJumping = false;
-      friction = 0.80;
-    }
-
-    this.velocity.scale(friction);
-
-    object.is = true;
+    // Gravity
+    //if(Math.abs(this.theta - angle) < 0.5){
+    this.velocity.subtract(this.coordSystem[1]);
+    //}
   };
 
 }

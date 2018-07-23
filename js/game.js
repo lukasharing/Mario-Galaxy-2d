@@ -104,11 +104,13 @@ class Game{
     this.ctx = canvas.getContext("2d");
 
     const wm = this.width >> 1, hm = this.height >> 1;
-    this.floor.push(new Floor(150, hm - 150, 150, 75, 0, true));
-    //this.floor.push(new Floor(800, hm, 150, 150, 0, true));
-    this.floor.push(new Floor(500, hm, 150, 150, 0, true));
 
-    this.entities[0] = new Entity(100, 100, 10, 15);
+    this.floor.push((new Shape(100, 300, 0, Math.PI / 4)).makeRegularPolygon(4, 50));
+    this.floor.push((new Shape(400, 300, 0, 0)).makeRegularPolygon(5, 200));
+    this.floor.push((new Shape(1000, 300, 0, 0)).makeRegularPolygon(16, 300));
+
+
+    this.entities[0] = new Entity(0, hm, 10, 15);
 
     this.play(this.last_tick = performance.now());
   };

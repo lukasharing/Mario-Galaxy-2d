@@ -33,35 +33,6 @@ class Vector {
   };
 }
 
-
-function getEdgesVector(el){
-  let fcs = Math.cos(el.theta);
-  let fsn = Math.sin(el.theta);
-  let csx = el.collision.x * fcs;
-  let sny = el.collision.y * fsn;
-  let snx = el.collision.x * fsn;
-  let csy = el.collision.y * fcs;
-  let mrx = csx - sny;
-  let mry = snx + csy;
-  let mix = csx + sny;
-  let miy = snx - csy;
-  let vectors = new Array(4);
-  vectors[0] = new Vector(el.position.x + mrx, el.position.y + mry, 0.0);
-  vectors[1] = new Vector(el.position.x + mix, el.position.y + miy, 0.0);
-  vectors[2] = new Vector(el.position.x - mix, el.position.y - miy, 0.0);
-  vectors[3] = new Vector(el.position.x - mrx, el.position.y - mry, 0.0);
-  return vectors;
-}
-
-function getCoordSystem(v1, v2){
-  return [
-    (v1[0].clone().subtract(v1[1])).normalize(),
-    (v1[0].clone().subtract(v1[2])).normalize(),
-    (v2[0].clone().subtract(v2[1])).normalize(),
-    (v2[0].clone().subtract(v2[2])).normalize()
-  ];
-}
-
 function shortestAngle(a, b){
     if(Math.abs(b - a) < PI){
       return (b - a);
