@@ -10,7 +10,7 @@ const VECTOR_B = new Vector(0, 1);
 
 class Game{
   constructor(){
-    this.keys = new Array(256).fill(false);
+    this.keys = new Array(256).fill(0);
 
     // Game size
     this.width = 0;
@@ -29,40 +29,46 @@ class Game{
     this.DEBUG = false;
   };
 
-  setKey(_key, _status){ this.keys[_key] = _status; };
+  pressKey(_key){ ++this.keys[_key]; };
+  unpressKey(_key){ this.keys[_key] = 0; };
 
   keycontroller(){
     if(this.entities[0].coordSystem[0] !== null){
 
+      let v = this.entities[0].velocity;
       if(this.DEBUG){
-        if(this.keys[37]){
-          this.entities[0].velocity.add(VECTOR_L);
+        if(this.keys[37] > 0){
+          v = v.add(VECTOR_L);
         }
 
-        if(this.keys[39]){
-          this.entities[0].velocity.subtract(VECTOR_L);
+        if(this.keys[39] > 0){
+          v = v.subtract(VECTOR_L);
         }
 
-        if(this.keys[38]){
-          this.entities[0].velocity.add(VECTOR_T);
+        if(this.keys[38] > 0){
+          v = v.add(VECTOR_T);
         }
 
-        if(this.keys[40]){
-          this.entities[0].velocity.subtract(VECTOR_T);
+        if(this.keys[40] > 0){
+          v = v.subtract(VECTOR_T);
         }
       }else{
-        if(this.keys[37]){
-          this.entities[0].velocity.add(this.entities[0].coordSystem[0]);
+        if(this.keys[37] > 0){
+          ++this.keys[37];
+          v = v.add(this.entities[0].coordSystem[0]);
         }
 
-        if(this.keys[39]){
-          this.entities[0].velocity.subtract(this.entities[0].coordSystem[0]);
+        if(this.keys[39] > 0){
+          ++this.keys[39];
+          v = v.subtract(this.entities[0].coordSystem[0]);
         }
 
-        if(this.keys[32]){
-          this.entities[0].jump();
+        if(this.keys[32] > 0){
+          ++this.keys[32];
+          v = this.entities[0].jump();
         }
       }
+      this.entities[0].velocity = v;
     }
   }
 
@@ -79,8 +85,8 @@ class Game{
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
 
-    this.entities.forEach(e=>{ e.draw(ctx); });
     this.floor.forEach(e=>{ e.draw(ctx); });
+    this.entities.forEach(e=>{ e.draw(ctx); });
   };
 
   play(time){
@@ -105,9 +111,11 @@ class Game{
 
     const wm = this.width >> 1, hm = this.height >> 1;
 
-    this.floor.push((new Shape(100, 300, 0, Math.PI / 4)).makeRegularPolygon(4, 50));
-    this.floor.push((new Shape(400, 300, 0, 0)).makeRegularPolygon(5, 200));
-    this.floor.push((new Shape(1000, 300, 0, 0)).makeRegularPolygon(16, 300));
+    this.floor.push(
+      //new Shape(100, 300, 0.01).makeRegularPolygon(4, 100).rotate(Math.PI / 2),
+      //new Shape(400, 300, 0.001).makeRegularPolygon(5, 200),
+      new Shape(this.width / 2, this.height / 2, 0.01).makeRegularPolygon(16, 300)
+    );
 
 
     this.entities[0] = new Entity(0, hm, 10, 15);

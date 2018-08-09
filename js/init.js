@@ -3,5 +3,8 @@ window.onload = ()=>{
   const game = new Game();
   game.init();
 
-  ["keyup", "keydown"].forEach(_e=>window.addEventListener(_e, e=>game.setKey(e.keyCode, _e=="keydown")));
+  let timer = 0;
+  window.addEventListener("keydown", e=>game.pressKey(e.keyCode));
+  window.addEventListener("keyup", e=>game.unpressKey(e.keyCode));
+
 }

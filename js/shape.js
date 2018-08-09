@@ -1,14 +1,17 @@
 class Shape{
 
-  constructor(_x = 0.0, _y = 0.0, _t = 0.0, _a = 0.0){
+  constructor(_x = 0.0, _y = 0.0, _r = 0.0){
     this.position = new Vector(_x, _y, 0.0);
 
     this.collision = null;
     this.normals = null;
 
-    this.theta = _a;
-    this.is = false;
+    this.angular_velocity = _r;
+    this.rotation = 0.0;
   };
+
+  getEdges(){ return this.collision.map(e=>e.add(this.position)); };
+
 
   makeRectangle(_w, _h){
     this.collision = new Array(4);
@@ -21,24 +24,13 @@ class Shape{
     return this;
   };
 
-  getEdgesVector(){
-    let cs = Math.cos(this.theta), sn = Math.sin(this.theta);
-    let vectors = new Array(this.collision.length);
-    for(let i = 0; i < this.collision.length; ++i){
-      let mrx = this.collision[i].x * cs - this.collision[i].y * sn;
-      let mry = this.collision[i].x * sn + this.collision[i].y * cs;
-      vectors[i] = new Vector(this.position.x + mrx, this.position.y + mry, 0.0);
-    }
-    return vectors;
-  }
-
   calculateNormals(){
-    let edges = this.getEdgesVector();
+    let edges = this.collision;
     this.normals = new Array(edges.length);
     for(let i = 0; i < edges.length - 1; ++i){
-      this.normals[i] = edges[i].clone().subtract(edges[i + 1]).perpendicular().normalize();
+      this.normals[i] = edges[i].subtract(edges[i + 1]).perpendicular().normalize();
     }
-    this.normals[edges.length - 1] = edges[edges.length - 1].clone().subtract(edges[0]).perpendicular().normalize();
+    this.normals[edges.length - 1] = edges[edges.length - 1].subtract(edges[0]).perpendicular().normalize();
   };
 
   makeRegularPolygon(_n, _l){
@@ -53,28 +45,40 @@ class Shape{
     return this;
   };
 
+  rotate(angle){
+    this.rotation += angle;
+    let cs = Math.cos(angle), sn = Math.sin(angle);
+    for(let i = 0; i < this.collision.length; ++i){
+      let mrx = this.collision[i].x * cs - this.collision[i].y * sn;
+      let mry = this.collision[i].x * sn + this.collision[i].y * cs;
+      this.collision[i].x = mrx;
+      this.collision[i].y = mry;
+      let nrx = this.normals[i].x * cs - this.normals[i].y * sn;
+      let nry = this.normals[i].x * sn + this.normals[i].y * cs;
+      this.normals[i].x = nrx;
+      this.normals[i].y = nry;
+    }
+    return this;
+  };
+
   get mass(){ return this.collision[0].length; };
 
   draw(ctx){
-    ctx.save();
-      ctx.beginPath();
-
-      ctx.translate(this.position.x, this.position.y);
-      ctx.rotate(this.theta);
-      ctx.translate(-this.collision.x, -this.collision.y);
-
-      ctx.moveTo(this.collision[0].x, this.collision[0].y);
-      for(let i = 1; i < this.collision.length; ++i){
-        ctx.lineTo(this.collision[i].x, this.collision[i].y);
-      }
-      ctx.strokeStyle = this.is ? "red" : "green";
-      ctx.closePath();
-      ctx.stroke();
-    ctx.restore();
+    let edges = this.getEdges();
+    ctx.beginPath();
+    ctx.moveTo(edges[0].x, edges[0].y);
+    for(let i = 1; i < edges.length; ++i){
+      ctx.lineTo(edges[i].x, edges[i].y);
+    }
+    ctx.strokeStyle = "green";
+    ctx.closePath();
+    ctx.stroke();
   };
 
   update(time){
-    //this.theta = (time * 0.01);
+    if(this.angular_velocity > 0.0){
+      this.rotate(this.angular_velocity);
+    }
   };
 
 }

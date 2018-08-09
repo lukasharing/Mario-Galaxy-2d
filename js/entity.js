@@ -5,7 +5,7 @@ class Entity{
     this.velocity = new Vector();
 
 
-    this.coordSystem = new Array(2);
+    this.coordSystem = [new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0)];
     this.isJumping = false;
   };
 
@@ -14,8 +14,9 @@ class Entity{
   jump(){
     if(this.isJumping < 0){
       this.isJumping = 10;
-      this.velocity.add(this.coordSystem[1].clone().scale(30.0));
+      return this.velocity.add(this.coordSystem[1].scale(30.0));
     }
+    return this.velocity;
   }
 
   draw(ctx){
@@ -23,12 +24,10 @@ class Entity{
   };
 
   intersect(floor){
-    // Vector 1
-    let v1 = this.box.getEdgesVector();
-    let v2 = floor.getEdgesVector();
+    let v1 = this.box.getEdges();
+    let v2 = floor.getEdges();
 
-    let axies = (new Array()).concat(this.box.normals, floor.normals);
-
+    let axies = [...this.box.normals, ...floor.normals];
     let total_shadow = 0;
     let idx = -1, min_distance = 1000000;
     for(let i = 0; i < axies.length; ++i){
@@ -52,15 +51,14 @@ class Entity{
         }
       }
     }
-
     if(total_shadow == axies.length){
-      this.position.add(axies[idx].clone().scale(Math.abs(min_distance)));
+      this.box.position = this.box.position.add(axies[idx].scale(Math.abs(min_distance)));
     }
     return total_shadow;
   };
 
   nearest_side(floor){
-    let v2 = floor.getEdgesVector();
+    let v2 = floor.getEdges();
     let dl = new Array(v2.length);
     for(let i = 0; i < v2.length - 1; ++i){
       dl[i] = getDistanceSegment(v2[i], v2[i + 1], this.box.position);
@@ -74,15 +72,13 @@ class Entity{
       }
     }
     let x = dl[k].vc.normalize().scale(-1);
-    //let y = x.dot(v2[k].mid(v2[(k + 1) % dl.length]).normalize());
-    //console.log(y);
     return [x, x.perpendicular()];
   }
 
   update(floor){
-    this.position.add(this.velocity);
-
     let maxForce = 0.0, object = floor[0], num_in = 0;
+    let velocity = this.velocity;
+    this.box.position = this.box.position.add(velocity);
 
     let touching_floor = false;
     floor.forEach((e, i)=>{
@@ -97,26 +93,33 @@ class Entity{
         maxForce = forceG;
         object = e;
       }
-
       touching_floor |= num_intersection == (e.collision.length + 4);
     });
-
+    // Changing Coord System
+    this.coordSystem = this.nearest_side(object);
     let friction = 0.90;
     if(touching_floor){
       --this.isJumping;
       friction = 0.80;
+
+      if(object.angular_velocity != 0.0){
+        // Pushing to rotation.
+        let v = this.position.subtract(object.position);
+        let w = v.subtract(v.rotate(object.angular_velocity));
+        this.box.position = this.box.position.subtract(w);
+      }
     }
-    this.velocity.scale(friction);
+    velocity = velocity.subtract(this.coordSystem[1]);
+    velocity = velocity.scale(friction);
+    this.velocity = velocity;
 
-    this.coordSystem = this.nearest_side(object);
+    // Rotation Angle
 
-    // angle
     let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
-    this.box.theta += shortestAngle(this.box.theta, angle) * 0.10;
+    this.box.rotate(angle - this.box.rotation);
 
     // Gravity
     //if(Math.abs(this.theta - angle) < 0.5){
-    this.velocity.subtract(this.coordSystem[1]);
     //}
   };
 
