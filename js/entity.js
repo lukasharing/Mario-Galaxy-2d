@@ -67,7 +67,6 @@ class Entity{
       let nr = floor.normals[i];
       let ap = nr.dot(ps) / ps.length;
       if(ap > 0.0){
-        console.log(i);
         dl.push(getDistanceSegment(v2[i], v2[(i + 1) % v2.length], this.box.position));
       }
     }
