@@ -61,25 +61,22 @@ class Entity{
 
   nearest_side(floor){
     let v2 = floor.getEdges();
-    let dl = new Array();
+    let dl = new Array(v2.length);
     for(let i = 0; i < v2.length; ++i){
       let ps = new Vector(this.position.x - v2[i].x, this.position.y - v2[i].y);
       let nr = floor.normals[i];
       let ap = nr.dot(ps) / ps.length;
-      if(ap > 0.0){
-        dl.push(getDistanceSegment(v2[i], v2[(i + 1) % v2.length], this.box.position));
-      }
+      dl[i] = ap < 0.0 ? 1e10 : getDistanceSegment(v2[i], v2[(i + 1) % v2.length], this.box.position);
     }
 
     let k = 0;
     for(let i = 1; i < dl.length; ++i){
-      if(dl[i].ds >= 0 && dl[i].ds < dl[k].ds){
+      if(dl[i] < dl[k]){
         k = i;
       }
     }
-    if(dl.length == 0 || dl[k].vc == null){ return []; }
-    let x = dl[k].vc.normalize().scale(-1);
-    return [x, x.perpendicular()];
+    if(dl[k] >= 1e10){ return []; }
+    return [floor.normals[k].perpendicular(), floor.normals[k].scale(-1)];
   }
 
   update(floor){
@@ -107,6 +104,7 @@ class Entity{
     // Changing Coord System
     let new_coord = this.nearest_side(object);
     if(new_coord.length < 2){
+      // If we dont find any near segment.
       const vy = new Vector(this.position.x - object.position.x, this.position.y - object.position.y).normalize();
       const vx = vy.perpendicular().scale(-1);
       this.coordSystem[0] = vx;
@@ -114,19 +112,24 @@ class Entity{
     }else{
       this.coordSystem = new_coord;
     }
+
     let friction = 0.95;
     if(touching_floor){
       --this.isJumping;
       friction = 0.80;
 
-      // if(object.angular_velocity != 0.0){
-      //   // Pushing to rotation.
-      //   velocity = velocity.add(this.coordSystem[0].scale(-object.angular_velocity));
-      // }
+      if(object.angular_velocity != 0.0){
+        // Pushing to rotation.
+        let vb = this.coordSystem[1];
+        let vr = vb.rotate(object.angular_velocity);
+        let prp = vr.subtract(vb);
+        this.box.position = this.box.position.add(prp.scale(300));
+
+      }
     }
 
     // Gravity
-    velocity = velocity.subtract(this.coordSystem[1]);
+    //velocity = velocity.subtract(this.coordSystem[1]);
 
     // Set the new Velocity after friction.
     this.velocity = velocity.scale(friction);

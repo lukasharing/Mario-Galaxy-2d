@@ -39,22 +39,12 @@ class Vector {
   };
 }
 
-function shortestAngle(a, b){
-    if(Math.abs(b - a) < PI){
-      return (b - a);
-    }
-    if(b > a){
-      return (b - a - 2 * PI);
-    }
-    return (b - a +  2 * PI);
-}
-
 function getDistanceSegment(v1, v2, p){
   let segment = v2.subtract(v1);
   let sg2 = p.subtract(v1);
   let t = sg2.dot(segment) / (segment.length * segment.length);
 
-  if(t < 0 || t > 1){ return {ds: 1000000000}; }
+  if(t < 0 || t > 1){ return 1e10; }
   let proj = v1.add(segment.scale(t));
-  return {ds: proj.subtract(p).length, vc: segment};
+  return proj.subtract(p).length;
 }

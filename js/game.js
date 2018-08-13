@@ -26,7 +26,7 @@ class Game{
     this.stop = null;
     this.last_tick = 0;
 
-    this.DEBUG = false;
+    this.DEBUG = true;
   };
 
   pressKey(_key){ ++this.keys[_key]; };
@@ -114,7 +114,7 @@ class Game{
     this.floor.push(
       //new Shape(100, 300, 0.01).makeRegularPolygon(4, 100).rotate(Math.PI / 2),
       //new Shape(400, 300, 0.001).makeRegularPolygon(5, 200),
-      new Shape(this.width / 2, this.height / 2, -0.01).makeRegularPolygon(5, 300)
+      new Shape(this.width / 2, this.height / 2, 0.0).makeRegularPolygon(8, 300)
     );
 
 
