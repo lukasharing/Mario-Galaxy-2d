@@ -91,6 +91,8 @@ class Entity{
     let touching_floor = false;
     floor.forEach((e, i)=>{
       e.is = false;
+
+      // Finding the most "attractive" body.
       const dx = e.position.x - this.position.x;
       const dy = e.position.y - this.position.y;
       const ds = dx * dx + dy * dy;
@@ -113,15 +115,15 @@ class Entity{
     }else{
       this.coordSystem = new_coord;
     }
-    let friction = 0.98;
+    let friction = 0.95;
     if(touching_floor){
       --this.isJumping;
       friction = 0.80;
 
-      /*if(object.angular_velocity != 0.0){
-        // Pushing to rotation.
-        velocity = velocity.add(this.coordSystem[0].scale(-object.angular_velocity));
-      }*/
+      // if(object.angular_velocity != 0.0){
+      //   // Pushing to rotation.
+      //   velocity = velocity.add(this.coordSystem[0].scale(-object.angular_velocity));
+      // }
     }
 
     // Gravity

@@ -1,3 +1,5 @@
+// Shapes should have at least 4 vertices to work properly.
+
 class Shape{
 
   constructor(_x = 0.0, _y = 0.0, _r = 0.0){
@@ -76,9 +78,9 @@ class Shape{
   };
 
   update(time){
-    /*if(this.angular_velocity != 0.0){
+    if(this.angular_velocity != 0.0){
       this.rotate(this.angular_velocity);
-    }*/
+    }
   };
 
 }
