@@ -76,9 +76,9 @@ class Shape{
   };
 
   update(time){
-    if(this.angular_velocity > 0.0){
+    /*if(this.angular_velocity != 0.0){
       this.rotate(this.angular_velocity);
-    }
+    }*/
   };
 
 }

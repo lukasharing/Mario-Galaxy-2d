@@ -4,6 +4,7 @@ class Entity{
     this.box = (new Shape(_x, _y, 0.0, 0.0)).makeRectangle(_w, _h);
     this.velocity = new Vector();
 
+    this.k = new Vector();
 
     this.coordSystem = [new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0)];
     this.isJumping = false;
@@ -21,6 +22,7 @@ class Entity{
 
   draw(ctx){
     this.box.draw(ctx);
+    this.velocity.draw(ctx, this.position.x, this.position.y);
   };
 
   intersect(floor){
@@ -59,18 +61,24 @@ class Entity{
 
   nearest_side(floor){
     let v2 = floor.getEdges();
-    let dl = new Array(v2.length);
-    for(let i = 0; i < v2.length - 1; ++i){
-      dl[i] = getDistanceSegment(v2[i], v2[i + 1], this.box.position);
+    let dl = new Array();
+    for(let i = 0; i < v2.length; ++i){
+      let ps = new Vector(this.position.x - v2[i].x, this.position.y - v2[i].y);
+      let nr = floor.normals[i];
+      let ap = nr.dot(ps) / ps.length;
+      if(ap > 0.0){
+        console.log(i);
+        dl.push(getDistanceSegment(v2[i], v2[(i + 1) % v2.length], this.box.position));
+      }
     }
-    dl[v2.length - 1] = getDistanceSegment(v2[v2.length - 1], v2[0], this.box.position);
 
     let k = 0;
     for(let i = 1; i < dl.length; ++i){
-      if(dl[i].ds < dl[k].ds){
+      if(dl[i].ds >= 0 && dl[i].ds < dl[k].ds){
         k = i;
       }
     }
+    if(dl.length == 0 || dl[k].vc == null){ return []; }
     let x = dl[k].vc.normalize().scale(-1);
     return [x, x.perpendicular()];
   }
@@ -96,31 +104,35 @@ class Entity{
       touching_floor |= num_intersection == (e.collision.length + 4);
     });
     // Changing Coord System
-    this.coordSystem = this.nearest_side(object);
-    let friction = 0.90;
+    let new_coord = this.nearest_side(object);
+    if(new_coord.length < 2){
+      const vy = new Vector(this.position.x - object.position.x, this.position.y - object.position.y).normalize();
+      const vx = vy.perpendicular().scale(-1);
+      this.coordSystem[0] = vx;
+      this.coordSystem[1] = vy;
+    }else{
+      this.coordSystem = new_coord;
+    }
+    let friction = 0.98;
     if(touching_floor){
       --this.isJumping;
       friction = 0.80;
 
-      if(object.angular_velocity != 0.0){
+      /*if(object.angular_velocity != 0.0){
         // Pushing to rotation.
-        let v = this.position.subtract(object.position);
-        let w = v.subtract(v.rotate(object.angular_velocity));
-        this.box.position = this.box.position.subtract(w);
-      }
+        velocity = velocity.add(this.coordSystem[0].scale(-object.angular_velocity));
+      }*/
     }
-    velocity = velocity.subtract(this.coordSystem[1]);
-    velocity = velocity.scale(friction);
-    this.velocity = velocity;
-
-    // Rotation Angle
-
-    let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
-    this.box.rotate(angle - this.box.rotation);
 
     // Gravity
-    //if(Math.abs(this.theta - angle) < 0.5){
-    //}
+    velocity = velocity.subtract(this.coordSystem[1]);
+
+    // Set the new Velocity after friction.
+    this.velocity = velocity.scale(friction);
+
+    // Rotation Angle
+    let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
+    this.box.rotate(angle - this.box.rotation);
   };
 
 }
