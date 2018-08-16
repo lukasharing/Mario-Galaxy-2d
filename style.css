@@ -9,8 +9,5 @@ html, body{
 
 body{
   align-items: center;
-}
-
-canvas{
-  background: white;
+  background: #777;
 }

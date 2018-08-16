@@ -23,17 +23,18 @@ class Vector {
   mid(_v){ return new Vector((this.x + _v.x) / 2, (this.y + _v.y) / 2, (this.z + _v.z) / 2); };
   rotate(a){ let c = Math.cos(a), s = Math.sin(a); return new Vector(c * this.x - s * this.y, s * this.x + c * this.y, this.z); }
   draw(ctx, x = 0.0, y = 0.0){
-    let a = Math.atan2(-this.y, this.x);
+    let a = Math.atan2(this.y, this.x);
+    let l = this.length;
     ctx.save();
       ctx.beginPath();
       ctx.translate(x, y);
       ctx.rotate(a);
       ctx.moveTo(0, 0);
-      ctx.lineTo(10, 0);
-      ctx.lineTo(10,-5);
-      ctx.lineTo(15, 0);
-      ctx.lineTo(10, 5);
-      ctx.lineTo(10, 0);
+      ctx.lineTo(l, 0);
+      ctx.lineTo(l,- 10);
+      ctx.lineTo(l + 10, 0);
+      ctx.lineTo(l, 10);
+      ctx.lineTo(l, 0);
       ctx.stroke();
     ctx.restore();
   };

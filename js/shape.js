@@ -14,6 +14,19 @@ class Shape{
 
   getEdges(){ return this.collision.map(e=>e.add(this.position)); };
 
+  get mass(){ return this.collision[0].length; };
+
+  draw(game){
+    let edges = this.getEdges();
+    game.ctx.beginPath();
+    game.ctx.moveTo(edges[0].x, edges[0].y);
+    for(let i = 1; i < edges.length; ++i){
+      game.ctx.lineTo(edges[i].x, edges[i].y);
+    }
+    game.ctx.fillStyle = "#e6e6e6";
+    game.ctx.closePath();
+    game.ctx.fill();
+  };
 
   makeRectangle(_w, _h){
     this.collision = new Array(4);
@@ -61,20 +74,6 @@ class Shape{
       this.normals[i].y = nry;
     }
     return this;
-  };
-
-  get mass(){ return this.collision[0].length; };
-
-  draw(ctx){
-    let edges = this.getEdges();
-    ctx.beginPath();
-    ctx.moveTo(edges[0].x, edges[0].y);
-    for(let i = 1; i < edges.length; ++i){
-      ctx.lineTo(edges[i].x, edges[i].y);
-    }
-    ctx.strokeStyle = "green";
-    ctx.closePath();
-    ctx.stroke();
   };
 
   update(time){

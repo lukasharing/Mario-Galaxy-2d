@@ -1,35 +1,54 @@
+// ENTITIES SHOULD HAVE ALL THE SAME PATTERN
+const SPRITE = {  };
+
 class Entity{
 
   constructor(_x, _y, _w, _h){
-    this.box = (new Shape(_x, _y, 0.0, 0.0)).makeRectangle(_w, _h);
+    this.collision = (new Shape(_x, _y, 0.0)).makeRectangle(_w, _h);
     this.velocity = new Vector();
 
-    this.k = new Vector();
+    // Gfx
+    this.sprite = new Vector(16, 26);
+    this.gfx_id = 0;
+    this.gfx_frame = 0;
 
+    // Physics
     this.coordSystem = [new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0)];
     this.isJumping = false;
   };
 
-  get position(){ return this.box.position; };
+  get position(){ return this.collision.position; };
 
-  jump(){
+  jump(factor){
     if(this.isJumping < 0){
       this.isJumping = 10;
-      return this.velocity.add(this.coordSystem[1].scale(30.0));
+      return this.coordSystem[1].scale(factor);
     }
-    return this.velocity;
+    return new Vector();
   }
 
-  draw(ctx){
-    this.box.draw(ctx);
-    this.velocity.draw(ctx, this.position.x, this.position.y);
+  draw(game){
+    game.ctx.save();
+      game.ctx.translate(this.position.x, this.position.y);
+      game.ctx.rotate(this.collision.rotation);
+      game.ctx.drawImage(game.get_gfx(0),
+                         this.gfx_id * this.sprite.x,
+                         this.gfx_id * this.sprite.y,
+                         this.sprite.x,
+                         this.sprite.y,
+                         -(this.sprite.x >> 1),
+                         -(this.sprite.y >> 1),
+                         this.sprite.x,
+                         this.sprite.y
+                       );
+    game.ctx.restore();
   };
 
   intersect(floor){
-    let v1 = this.box.getEdges();
+    let v1 = this.collision.getEdges();
     let v2 = floor.getEdges();
 
-    let axies = [...this.box.normals, ...floor.normals];
+    let axies = [...this.collision.normals, ...floor.normals];
     let total_shadow = 0;
     let idx = -1, min_distance = 1000000;
     for(let i = 0; i < axies.length; ++i){
@@ -54,35 +73,41 @@ class Entity{
       }
     }
     if(total_shadow == axies.length){
-      this.box.position = this.box.position.add(axies[idx].scale(Math.abs(min_distance)));
+      this.collision.position = this.collision.position.add(axies[idx].scale(Math.abs(min_distance)));
     }
     return total_shadow;
   };
 
+  // TODO: GET RID OF MODULUS INSIDE FOR LOOP
   nearest_side(floor){
     let v2 = floor.getEdges();
-    let dl = new Array(v2.length);
+    let k = -1, last = 1e10;
     for(let i = 0; i < v2.length; ++i){
       let ps = new Vector(this.position.x - v2[i].x, this.position.y - v2[i].y);
       let nr = floor.normals[i];
-      let ap = nr.dot(ps) / ps.length;
-      dl[i] = ap < 0.0 ? 1e10 : getDistanceSegment(v2[i], v2[(i + 1) % v2.length], this.box.position);
-    }
-
-    let k = 0;
-    for(let i = 1; i < dl.length; ++i){
-      if(dl[i] < dl[k]){
+      /*
+        let normal be n
+        let vertex be v
+        let position be p
+        n . (p - v) = ||n||||p - v||sin(alpha),
+        sin(aplha) >= 0 => 0 <= aplha <= PI / 2
+        because sin(alpha) >= 0 => n . (p - v) / (||n||||p - v||) >= 0
+        ||n|| = 1
+        || p - v || > 0
+        then it can be optimized => n . (p - v) >= 0
+      */
+      let ds = nr.dot(ps) < 0.0 ? 1e10 : getDistanceSegment(v2[i], v2[(i + 1) % v2.length], this.collision.position);
+      if(ds < last){
         k = i;
       }
     }
-    if(dl[k] >= 1e10){ return []; }
-    return [floor.normals[k].perpendicular(), floor.normals[k].scale(-1)];
+    return k;
   }
 
   update(floor){
     let maxForce = 0.0, object = floor[0], num_in = 0;
     let velocity = this.velocity;
-    this.box.position = this.box.position.add(velocity);
+    this.collision.position = this.collision.position.add(velocity);
 
     let touching_floor = false;
     floor.forEach((e, i)=>{
@@ -103,40 +128,45 @@ class Entity{
     });
     // Changing Coord System
     let new_coord = this.nearest_side(object);
-    if(new_coord.length < 2){
-      // If we dont find any near segment.
-      const vy = new Vector(this.position.x - object.position.x, this.position.y - object.position.y).normalize();
-      const vx = vy.perpendicular().scale(-1);
-      this.coordSystem[0] = vx;
-      this.coordSystem[1] = vy;
-    }else{
-      this.coordSystem = new_coord;
-    }
 
     let friction = 0.95;
     if(touching_floor){
       --this.isJumping;
       friction = 0.80;
-
-      if(object.angular_velocity != 0.0){
-        // Pushing to rotation.
-        let vb = this.coordSystem[1];
-        let vr = vb.rotate(object.angular_velocity);
-        let prp = vr.subtract(vb);
-        this.box.position = this.box.position.add(prp.scale(300));
-
-      }
     }
 
     // Gravity
-    //velocity = velocity.subtract(this.coordSystem[1]);
+    velocity = velocity.subtract(this.coordSystem[1]);
+
+    if(new_coord >= 0){
+      // If we find
+      this.coordSystem[0] = object.normals[new_coord].perpendicular().scale(-1);
+      this.coordSystem[1] = object.normals[new_coord];
+
+      if(touching_floor && floor.angular_velocity != 0.0){
+        // Pushing to rotation.
+        let vb = object.collision[new_coord];
+        let vc = object.collision[(new_coord + 1) % object.collision.length];
+        let cs = vc.subtract(vb).normalize().scale(-Math.sin(object.angular_velocity) * vb.length);
+        this.collision.position = this.collision.position.add(cs);
+      }
+    }else{
+      // If we dont find any near segment.
+      const vy = new Vector(this.position.x - object.position.x, this.position.y - object.position.y).normalize();
+      const vx = vy.perpendicular().scale(-1);
+      this.coordSystem[0] = vx;
+      this.coordSystem[1] = vy;
+    }
 
     // Set the new Velocity after friction.
     this.velocity = velocity.scale(friction);
 
     // Rotation Angle
     let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
-    this.box.rotate(angle - this.box.rotation);
+    let df = angle - this.collision.rotation;
+    if(df != 0.0){
+      this.collision.rotate(df);
+    }
   };
 
 }

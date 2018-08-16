@@ -1,4 +1,5 @@
-const MAX_ENTITIES = 20;
+const MAX_ENTITIES = 128;
+const MAX_GFXS = 256;
 const MAX_FPS = 10.0;
 
 // Vectors;
@@ -26,8 +27,30 @@ class Game{
     this.stop = null;
     this.last_tick = 0;
 
-    this.DEBUG = true;
+    // Gfxs
+    this.total_gfx = 0;
+    this.cache_gfx = new Array(MAX_GFXS);
+
+    this.DEBUG = false;
   };
+
+  // "CACHE" functions
+  load_gfx(path){
+    return new Promise((resolve, reject) => {
+      const gfx = new Image();
+      gfx.onload = ()=>{
+        this.cache_gfx[this.total_gfx++] = gfx;
+        resolve();
+      };
+
+      gfx.onerror = ()=>{
+        reject();
+      };
+      gfx.src = path;
+    });
+  };
+
+  get_gfx(id){ return this.cache_gfx[id]; };
 
   pressKey(_key){ ++this.keys[_key]; };
   unpressKey(_key){ this.keys[_key] = 0; };
@@ -55,17 +78,17 @@ class Game{
       }else{
         if(this.keys[37] > 0){
           ++this.keys[37];
-          v = v.add(this.entities[0].coordSystem[0]);
+          v = v.add(this.entities[0].coordSystem[0].scale(0.6));
         }
 
         if(this.keys[39] > 0){
           ++this.keys[39];
-          v = v.subtract(this.entities[0].coordSystem[0]);
+          v = v.subtract(this.entities[0].coordSystem[0].scale(0.6));
         }
 
         if(this.keys[32] > 0){
           ++this.keys[32];
-          v = this.entities[0].jump();
+          v = v.add(this.entities[0].jump(20.0));
         }
       }
       this.entities[0].velocity = v;
@@ -82,11 +105,11 @@ class Game{
   };
 
   render(){
-    const ctx = this.ctx;
-    ctx.clearRect(0, 0, this.width, this.height);
+    //this.ctx.imageSmoothingEnabled = false;
+    this.ctx.clearRect(0, 0, this.width, this.height);
 
-    this.floor.forEach(e=>{ e.draw(ctx); });
-    this.entities.forEach(e=>{ e.draw(ctx); });
+    this.floor.forEach(e=>{ e.draw(this); });
+    this.entities.forEach(e=>{ e.draw(this); });
   };
 
   play(time){
@@ -111,16 +134,28 @@ class Game{
 
     const wm = this.width >> 1, hm = this.height >> 1;
 
-    this.floor.push(
+    /*this.floor.push(
       //new Shape(100, 300, 0.01).makeRegularPolygon(4, 100).rotate(Math.PI / 2),
-      //new Shape(400, 300, 0.001).makeRegularPolygon(5, 200),
+      new Shape(400, 300, 0.0).makeRegularPolygon(5, 200),
       new Shape(this.width / 2, this.height / 2, 0.0).makeRegularPolygon(8, 300)
-    );
+    );*/
 
-
+    // Player
     this.entities[0] = new Entity(0, hm, 10, 15);
 
-    this.play(this.last_tick = performance.now());
+    let total = 2;
+    for(let i = 0; i < total; ++i){
+      let d = Math.PI * 2 / total * i;
+      let dx = this.width / 2 + Math.cos(d) * 200;
+      let dy = this.height / 2 + Math.sin(d) * 200;
+      this.floor.push(new Shape(dx, dy, 0.01).makeRegularPolygon((i>>1) + 4, 150));
+    }
+
+    Promise.all([
+      this.load_gfx("./img/player.png")
+    ]).then(e=>{
+      this.play(this.last_tick = performance.now());
+    });
   };
 
 };
