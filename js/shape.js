@@ -2,13 +2,10 @@
 
 class Shape{
 
-  constructor(_x = 0.0, _y = 0.0, _r = 0.0){
+  constructor(_x = 0.0, _y = 0.0){
     this.position = new Vector(_x, _y, 0.0);
-
     this.collision = null;
     this.normals = null;
-
-    this.angular_velocity = _r;
     this.rotation = 0.0;
   };
 
@@ -61,7 +58,8 @@ class Shape{
   };
 
   rotate(angle){
-    this.rotation += angle;
+    this.rotation = (this.rotation + (angle < 0 ? PI_2 : 0) + angle) % PI_2;
+
     let cs = Math.cos(angle), sn = Math.sin(angle);
     for(let i = 0; i < this.collision.length; ++i){
       let mrx = this.collision[i].x * cs - this.collision[i].y * sn;
@@ -76,10 +74,43 @@ class Shape{
     return this;
   };
 
-  update(time){
-    if(this.angular_velocity != 0.0){
-      this.rotate(this.angular_velocity);
-    }
+  intersect_shapes(shapes){
+    let repulsive_forces = new Array();
+    shapes.forEach(shape => {
+      let v1 = this.getEdges();
+      let v2 = shape.getEdges();
+
+      let axies = [...this.normals, ...shape.normals];
+
+      let minimum_penetration = new Array();
+      for(let i = 0; i < axies.length; ++i){
+        let pj1 = new Array(v1.length), pj2 = new Array(v2.length);
+        for(let j = 0; j < v1.length; ++j){
+          pj1[j] = axies[i].dot(v1[j]);
+        }
+        for(let j = 0; j < v2.length; ++j){
+          pj2[j] = axies[i].dot(v2[j]);
+        }
+
+        let pj1min = Math.min(...pj1), pj1max = Math.max(...pj1);
+        let pj2min = Math.min(...pj2), pj2max = Math.max(...pj2);
+        // Check if shadow overlaps
+        if(pj1min <= pj2max && pj2min <= pj1max){
+          let penetration = pj1max > pj2max ? (pj2max - pj1min) : (pj2min - pj1max);
+          minimum_penetration.push(axies[i].scale(penetration));
+        }
+      }
+
+      if(minimum_penetration.length == axies.length){
+        minimum_penetration.sort((a, b) => a.length - b.length);
+        // Add to force to the repulsive force list.
+        repulsive_forces.push({
+          body: shape,
+          repulsive_force: minimum_penetration[0]
+        });
+      }
+    });
+    return repulsive_forces;
   };
 
 }

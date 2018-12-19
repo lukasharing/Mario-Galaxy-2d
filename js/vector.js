@@ -1,4 +1,5 @@
 const PI = Math.PI;
+const PI_2 = 2 * PI;
 const H_PI = PI / 2;
 
 class Vector {
@@ -18,7 +19,7 @@ class Vector {
   subtract(_v){ return new Vector(this.x - _v.x, this.y - _v.y, this.z - _v.z); };
   scale(_s){ return new Vector(this.x * _s, this.y * _s, this.z * _s); };
   projection(_v){ const a = this.dot(_v) / (v.length * v.length); return _v.scale(a); };
-  normalize(){ return new Vector(this.x / this.length, this.y / this.length, this.z / this.length); };
+  normalize(){ let l = 1 / this.length; return new Vector(this.x * l, this.y * l, this.z * l); };
   perpendicular(){ return new Vector(-this.y, this.x, this.z); return this; };
   mid(_v){ return new Vector((this.x + _v.x) / 2, (this.y + _v.y) / 2, (this.z + _v.z) / 2); };
   rotate(a){ let c = Math.cos(a), s = Math.sin(a); return new Vector(c * this.x - s * this.y, s * this.x + c * this.y, this.z); }

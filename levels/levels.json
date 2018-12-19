@@ -1,0 +1,64 @@
+{
+  "lvl1" : {
+
+    "entities": [
+      {
+        "x": 100,
+        "y": 100,
+        "w": 100,
+        "h": 100,
+        "speechbox" : [
+          {
+            "step": 0,
+            "require": -1,
+            "text": "Hola mundo"
+          },
+          {
+            "step": 1,
+            "require": 0,
+            "text": "Adios mundo"
+          }
+        ]
+      }
+    ],
+
+    "floors" : [
+      {
+        "x": 0,
+        "y": 0,
+        "type": "rectangle",
+        "rotation": 0.0,
+        "width": 250,
+        "height": 250,
+        "children": [
+          {
+            "x": 100,
+            "y": 450,
+            "type": "rectangle",
+            "rotation": 0.0,
+            "width": 50,
+            "height": 50
+          }
+        ]
+      },
+      {
+        "x": -250,
+        "y": -350,
+        "type": "shape",
+        "rotation": 0.0,
+        "radius": 100,
+        "sides": 5,
+        "children": []
+      },
+      {
+        "x": 250,
+        "y": 350,
+        "type": "shape",
+        "rotation": 0.0,
+        "radius": 100,
+        "sides": 6,
+        "children": []
+      }
+    ]
+  }
+}

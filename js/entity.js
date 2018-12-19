@@ -1,172 +1,144 @@
 // ENTITIES SHOULD HAVE ALL THE SAME PATTERN
 const SPRITE = {  };
 
-class Entity{
+class Entity extends Shape{
 
   constructor(_x, _y, _w, _h){
-    this.collision = (new Shape(_x, _y, 0.0)).makeRectangle(_w, _h);
-    this.velocity = new Vector();
+    super(_x, _y)
+    super.makeRectangle(_w, _h);
+
+    this.velocity = new Vector(0.01, 0.01);
 
     // Gfx
-    this.sprite = new Vector(16, 26);
+    this.sprite = new Vector(26, 36);
     this.gfx_id = 0;
     this.gfx_frame = 0;
 
     // Physics
     this.coordSystem = [new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0)];
+    this.last_orientation = 1;
+    this.objectOver = null;
     this.isJumping = false;
+    this.isTouchingFloor = false;
+    this.friction = 0.98;
   };
-
-  get position(){ return this.collision.position; };
 
   jump(factor){
     if(this.isJumping < 0){
-      this.isJumping = 10;
+      this.isTouchingFloor = false;
+      this.isJumping = 4;
       return this.coordSystem[1].scale(factor);
     }
     return new Vector();
   }
 
   draw(game){
+    // Update Gfx index
+    let x_direction = this.coordSystem[0].dot(this.velocity);
+    if(!this.isTouchingFloor){
+      let y_direction = this.coordSystem[1].dot(this.velocity);
+      this.gfx_id = Math.sign(y_direction) > 0 ? 2 : 3;
+    }else{
+      if(Math.abs(x_direction) > 1){
+        this.last_orientation = -Math.sign(x_direction);
+        ++this.gfx_frame;
+        this.gfx_id = (this.gfx_frame >> 3) & 1;
+      }else{
+        this.gfx_frame = 0;
+        this.gfx_id = 0;
+      }
+    }
+
     game.ctx.save();
       game.ctx.translate(this.position.x, this.position.y);
-      game.ctx.rotate(this.collision.rotation);
-      game.ctx.drawImage(game.get_gfx(0),
-                         this.gfx_id * this.sprite.x,
-                         this.gfx_id * this.sprite.y,
-                         this.sprite.x,
-                         this.sprite.y,
-                         -(this.sprite.x >> 1),
-                         -(this.sprite.y >> 1),
-                         this.sprite.x,
-                         this.sprite.y
-                       );
+      game.ctx.rotate(this.rotation);
+
+      game.ctx.scale(this.last_orientation, 1.0);
+
+      game.ctx.drawImage(
+        game.get_gfx(0),
+        this.gfx_id * this.sprite.x,
+        0.0,
+        this.sprite.x,
+        this.sprite.y,
+        -(this.sprite.x >> 1),
+        -(this.sprite.y >> 1),
+        this.sprite.x,
+        this.sprite.y
+      );
+
     game.ctx.restore();
+
   };
 
-  intersect(floor){
-    let v1 = this.collision.getEdges();
-    let v2 = floor.getEdges();
-
-    let axies = [...this.collision.normals, ...floor.normals];
-    let total_shadow = 0;
-    let idx = -1, min_distance = 1000000;
-    for(let i = 0; i < axies.length; ++i){
-      let pj1 = new Array(v1.length), pj2 = new Array(v2.length);
-      for(let j = 0; j < v1.length; ++j){
-        pj1[j] = axies[i].dot(v1[j]);
-      }
-      for(let j = 0; j < v2.length; ++j){
-        pj2[j] = axies[i].dot(v2[j]);
-      }
-
-      let pj1min = Math.min(...pj1), pj1max = Math.max(...pj1);
-      let pj2min = Math.min(...pj2), pj2max = Math.max(...pj2);
-
-      if(pj1min <= pj2max && pj2min <= pj1max){
-        ++total_shadow;
-        let distance = (pj2min < pj1min) ? (pj1min - pj2max) : (pj1max - pj2min);
-        if(distance * distance < min_distance * min_distance && Math.abs(distance) > distance){
-          idx = i;
-          min_distance = distance;
-        }
-      }
-    }
-    if(total_shadow == axies.length){
-      this.collision.position = this.collision.position.add(axies[idx].scale(Math.abs(min_distance)));
-    }
-    return total_shadow;
-  };
-
-  // TODO: GET RID OF MODULUS INSIDE FOR LOOP
-  nearest_side(floor){
-    let v2 = floor.getEdges();
-    let k = -1, last = 1e10;
-    for(let i = 0; i < v2.length; ++i){
-      let ps = new Vector(this.position.x - v2[i].x, this.position.y - v2[i].y);
-      let nr = floor.normals[i];
-      /*
-        let normal be n
-        let vertex be v
-        let position be p
-        n . (p - v) = ||n||||p - v||sin(alpha),
-        sin(aplha) >= 0 => 0 <= aplha <= PI / 2
-        because sin(alpha) >= 0 => n . (p - v) / (||n||||p - v||) >= 0
-        ||n|| = 1
-        || p - v || > 0
-        then it can be optimized => n . (p - v) >= 0
-      */
-      let ds = nr.dot(ps) < 0.0 ? 1e10 : getDistanceSegment(v2[i], v2[(i + 1) % v2.length], this.collision.position);
-      if(ds < last){
-        k = i;
-      }
-    }
-    return k;
-  }
-
-  update(floor){
-    let maxForce = 0.0, object = floor[0], num_in = 0;
-    let velocity = this.velocity;
-    this.collision.position = this.collision.position.add(velocity);
-
-    let touching_floor = false;
-    floor.forEach((e, i)=>{
-      e.is = false;
-
-      // Finding the most "attractive" body.
-      const dx = e.position.x - this.position.x;
-      const dy = e.position.y - this.position.y;
-      const ds = dx * dx + dy * dy;
-      const forceG = e.mass / (ds * ds);
-
-      let num_intersection = this.intersect(e);
-      if(forceG > maxForce && num_intersection > 0){ // vc = -G * m1 / d^2
-        maxForce = forceG;
-        object = e;
-      }
-      touching_floor |= num_intersection == (e.collision.length + 4);
-    });
-    // Changing Coord System
-    let new_coord = this.nearest_side(object);
-
-    let friction = 0.95;
-    if(touching_floor){
+  update(game){
+    let friction = 0.0;
+    // If the floor is being touched
+    if(this.isTouchingFloor){
       --this.isJumping;
-      friction = 0.80;
-    }
-
-    // Gravity
-    velocity = velocity.subtract(this.coordSystem[1]);
-
-    if(new_coord >= 0){
-      // If we find
-      this.coordSystem[0] = object.normals[new_coord].perpendicular().scale(-1);
-      this.coordSystem[1] = object.normals[new_coord];
-
-      if(touching_floor && floor.angular_velocity != 0.0){
-        // Pushing to rotation.
-        let vb = object.collision[new_coord];
-        let vc = object.collision[(new_coord + 1) % object.collision.length];
-        let cs = vc.subtract(vb).normalize().scale(-Math.sin(object.angular_velocity) * vb.length);
-        this.collision.position = this.collision.position.add(cs);
-      }
+      friction = 0.75; // Friction on the floor
     }else{
-      // If we dont find any near segment.
-      const vy = new Vector(this.position.x - object.position.x, this.position.y - object.position.y).normalize();
-      const vx = vy.perpendicular().scale(-1);
-      this.coordSystem[0] = vx;
-      this.coordSystem[1] = vy;
+      //
+      friction = Math.sign(this.coordSystem[1].dot(this.velocity)) > 0 ? 0.9 : 0.98;
     }
 
-    // Set the new Velocity after friction.
-    this.velocity = velocity.scale(friction);
-
-    // Rotation Angle
+    // Rotating the collision Box
     let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
-    let df = angle - this.collision.rotation;
-    if(df != 0.0){
-      this.collision.rotate(df);
+    let df = angle - this.rotation;
+    if(df != 0.0){ this.rotate(df); }
+
+
+    /* Update Forces */
+    // Friction interaction
+    this.velocity = this.velocity.scale(friction);
+    // Add Gravity
+    let last_velocity_state = null;
+    let imaginary_velocity = last_velocity_state = this.velocity.subtract(this.coordSystem[1]);
+
+    // Get all intersections
+    // 1. Simulate Fake Gravity ()
+    this.position = this.position.add(last_velocity_state);
+    let intersect_shapes = this.intersect_shapes(game.floor);
+    if(intersect_shapes.length > 0){
+      imaginary_velocity = this.velocity;
+      this.isTouchingFloor = true;
+      intersect_shapes.forEach(e => {
+        this.position = this.position.add(e.repulsive_force);
+      });
+      console.log(intersect_shapes[0].body.parent);
+      this.objectOver = intersect_shapes[0].body.parent !== null ? intersect_shapes[0].body.parent : intersect_shapes[0].body;
+    }else{
+      // The object who has the biggest attractive force will be our "planet"
+      this.objectOver = game.getForceInPoint(this.position).body;
     }
+    // 2. Remove Gravity Simulation
+    this.position = this.position.subtract(last_velocity_state);
+
+    // 3. Apply Real Gravity
+    this.velocity = imaginary_velocity;
+    this.position = this.position.add(this.velocity);
+
+    // Conservation of momentum, object placed on top of other should rotate together
+    // TODO: Check if set this.objectOver = first floor.
+    if(this.objectOver.angular_velocity != 0.0){
+      this.rotate(this.objectOver.angular_velocity);
+      let vb = new Vector(this.position.x - this.objectOver.position.x, this.position.y - this.objectOver.position.y);
+      let vr = vb.rotate(this.objectOver.angular_velocity);
+      let ds = vr.subtract(vb);
+      this.position = this.position.add(ds);
+    }
+
+    // If there exist a segment where the "player's shadows" cast over from the element we are gravitating,
+    // The vector of the segment and its perpendicular will be our system coordinate
+    let new_coord = game.nearest_side(this.position, this.objectOver); // Get the ID.
+    if(new_coord >= 0){ // If we find
+      this.coordSystem[1] = this.objectOver.normals[new_coord];
+    }else{ // If we dont find any near segment.
+      // Lets find the corner
+      let nearest_edge = this.objectOver.getEdges().map(e => e.subtract(this.position)).sort((a, b) => (a.length - b.length))[0].normalize().scale(-1);
+      this.coordSystem[1] = nearest_edge;
+    }
+    this.coordSystem[0] = this.coordSystem[1].perpendicular().scale(-1);
   };
 
 }

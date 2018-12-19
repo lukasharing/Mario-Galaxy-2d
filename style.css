@@ -9,5 +9,11 @@ html, body{
 
 body{
   align-items: center;
-  background: #777;
+  background: #1f1f1f;
+}
+
+#game{
+  display: block;
+  background: white;
+  margin: 0 auto;
 }
