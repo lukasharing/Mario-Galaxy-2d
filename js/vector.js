@@ -11,6 +11,7 @@ class Vector {
 
   // GETTER / SETTER
   get length(){ return Math.sqrt(this.dot(this)); };
+  get alpha(){ return Math.atan2(this.y, this.x); };
 
   dot(_v){ return (this.x * _v.x + this.y * _v.y + this.z * _v.z); };
   angle(_v){ return Math.acos(this.dot(_v) / (_v.length * this.length)); };
@@ -22,7 +23,8 @@ class Vector {
   normalize(){ let l = 1 / this.length; return new Vector(this.x * l, this.y * l, this.z * l); };
   perpendicular(){ return new Vector(-this.y, this.x, this.z); return this; };
   mid(_v){ return new Vector((this.x + _v.x) / 2, (this.y + _v.y) / 2, (this.z + _v.z) / 2); };
-  rotate(a){ let c = Math.cos(a), s = Math.sin(a); return new Vector(c * this.x - s * this.y, s * this.x + c * this.y, this.z); }
+  rotate(a){ let c = Math.cos(a), s = Math.sin(a); return new Vector(c * this.x - s * this.y, s * this.x + c * this.y, this.z); };
+  
   draw(ctx, x = 0.0, y = 0.0){
     let a = Math.atan2(this.y, this.x);
     let l = this.length;

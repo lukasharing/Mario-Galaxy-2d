@@ -23,34 +23,17 @@ class Game{
     // Drawing Variables
     this.ctx = null;
     this.entities = new Array(MAX_ENTITIES); // Entity 0 = Player
+    this.sprites = {};
     this.floor = new Array();
 
     // Time Variables
     this.stop = null;
-    this.time = 0;
-    this.last_tick = 0;
-
-    // Gfxs
-    this.total_gfx = 0;
-    this.cache_gfx = new Array(MAX_GFXS);
+    this.last_frame = 0;
+    this.last_time = 0;
+    this.frames = 0;
+    this.max_frames = 1000 / 60;
 
     this.DEBUG = false;
-  };
-
-  // "CACHE" functions
-  load_gfx(path){
-    return new Promise((resolve, reject) => {
-      const gfx = new Image();
-      gfx.onload = ()=>{
-        this.cache_gfx[this.total_gfx++] = gfx;
-        resolve();
-      };
-
-      gfx.onerror = ()=>{
-        reject();
-      };
-      gfx.src = path;
-    });
   };
 
   get_gfx(id){ return this.cache_gfx[id]; };
@@ -98,12 +81,12 @@ class Game{
     }
   }
 
-  update(){
+  update(dt){
     // 1º Update Floors.
-    this.floor.forEach(e=>{ e.update(this.time); });
+    this.floor.forEach(e=>{ e.update(dt); });
 
     // 2º Update Entities.
-    this.entities.forEach(e=>{ e.update(this); });
+    this.entities.forEach(e=>{ e.update(dt, this); });
 
 
     this.camera.update();
@@ -113,6 +96,12 @@ class Game{
     //this.ctx.imageSmoothingEnabled = false;
     this.ctx.clearRect(0, 0, this.width, this.height);
 
+    // Render GUI
+    this.ctx.beginPath();
+    this.ctx.font = "20px Verdana";
+    this.ctx.fillText(`${this.fps.toFixed(1)}fps`, 10, 30);
+
+    // Render Main Graphics
     this.ctx.save();
       // Translate Camera
       this.ctx.translate(this.width / 2, this.height / 2);
@@ -122,21 +111,32 @@ class Game{
 
       this.draw_gravitational_map();
       // Draw Everithing Else
-      this.floor.forEach(e=>{ e.draw(this); });
-      this.entities.forEach(e=>{ e.draw(this); });
+      this.floor.forEach(e=>{ e.draw(this.ctx); });
+      this.entities.forEach(e=>{ e.draw(this.ctx); });
 
     this.ctx.restore();
   };
 
-  play(){
-    // Update Game Time
-    this.time++;
-    this.keycontroller();
+  play(time){
+    const now = window.performance.now();
+    const delta = now - this.last_frame;
+    if(delta > this.max_frames){
 
-    this.update();
-    this.render();
+      this.last_frame = now - (delta % this.max_frames);
+      this.fps = 1000 / (time - this.last_time);
+      this.last_time = time;
 
-    this.stop = window.requestAnimationFrame( e => this.play() );
+      const dt = this.fps / 1000;
+      // Interrupts
+      this.keycontroller();
+
+      // Game Updates
+      this.update(dt);
+      this.render();
+
+    }
+
+    this.stop = window.requestAnimationFrame((e) => this.play(e));
   };
 
   /*
@@ -151,7 +151,7 @@ class Game{
     then it can be optimized => n . (p - v) >= 0
   */
   nearest_side(vector, floor){
-    let v2 = floor.getEdges();
+    let v2 = floor.edges();
     let k = -1, last = 1e10;
     let last_element = v2.length - 1;
     for(let i = 0; i < last_element; ++i){
@@ -201,7 +201,7 @@ class Game{
           this.ctx.stroke();
         }else{
           // Find Nearest Vertice
-          let nearest_edge = fc.body.getEdges().map(e => e.subtract(vector)).sort((a, b) => (a.length - b.length))[0].normalize();
+          let nearest_edge = fc.body.edges().map(e => e.subtract(vector)).sort((a, b) => (a.length - b.length))[0].normalize();
           this.ctx.beginPath();
           this.ctx.moveTo(vector.x, vector.y);
           this.ctx.lineTo(vector.x + nearest_edge.x * 10, vector.y + nearest_edge.y * 10);
@@ -214,13 +214,13 @@ class Game{
 
   getForceInPoint(entity){
     let gravitational_element = {body: null, force: new Vector(), length: 0.0};
-
+    
     for(let i = 0; i < this.floor.length; ++i){
       // Finding the most "attractive" body.
       const floor = this.floor[i];
       if(floor.parent === null){
         const dv = floor.position.subtract(entity);
-        const attractive_force = (floor.mass ** 2)  / dv.dot(dv);
+        const attractive_force = floor.mass / dv.dot(dv);
         if(attractive_force > gravitational_element.length){ // vc = -G * m1 / d^2
           gravitational_element.body = floor;
           gravitational_element.force = dv.normalize();
@@ -231,63 +231,95 @@ class Game{
     return gravitational_element;
   }
 
+  load_level(i){
+
+  };
+
   init(){
+    // Initialize Canvas
     const canvas = document.getElementById("game");
     canvas.width = this.width = 700;
     canvas.height = this.height = 500;
     this.ctx = canvas.getContext("2d");
 
-    fetch("./levels/levels.json").then(e => {
-      e.json().then(json => {
-        let lvl = json["lvl1"];
+    // Initialize Camera
+    this.camera = new Camera(this);
 
-          // Create Camera
-          this.camera = new Camera(this);
-
-          // Add Player
-          this.entities[0] = new Entity(200, 0, 10, 14);
-          this.camera.lookAt(this.entities[0]);
-
-          let allFloors = new Array();
-          // Adding all floors into queue.
-          lvl.floors.forEach(first_layer => {
-            let first_layer_floor = new Floor(first_layer.x, first_layer.y, first_layer.rotation, null);
-            allFloors.push({
-                floor: first_layer_floor,
-                descriptor: first_layer,
-              }
-            );
-
-            // Add children to floor buffer.
-            first_layer.children.forEach(second_layer => {
-              allFloors.push({
-                floor: new Floor(first_layer.x + second_layer.x, first_layer.y + second_layer.y, second_layer.rotation, first_layer_floor),
-                descriptor: second_layer,
-              });
-            });
+    
+    // Initialize Sprites
+    const sprites_queue = new Promise((ok, bad) => {
+      fetch("./json/sprites.json").then(e => {
+        e.json().then(json => {
+          Promise.all(Object.keys(json).map(e => Sprite.load(json[e]))).then(e => {
+            // Set pair key -> sprite
+            Object.keys(json).forEach((k, i) => this.sprites[k] = e[i]);
+            ok();
           });
-
-          // Create each shape for its floor.
-          allFloors.forEach(floor_descriptor => {
-            let info = floor_descriptor.descriptor;
-            switch(info.type){
-              case "rectangle":
-                floor_descriptor.floor.makeRectangle(info.width, info.height);
-              break;
-              case "shape":
-                floor_descriptor.floor.makeRegularPolygon(info.sides, info.radius);
-              break;
-            }
-            this.floor.push(floor_descriptor.floor);
-          });
-
-          Promise.all([
-            this.load_gfx("./img/player.png")
-          ]).then(e=>{
-            this.play();
-          });
+        });
       });
     });
+    // Initialize Levels
+    sprites_queue.then( _ => {
+      const levels_queue = new Promise((ok, bad) => {
+        fetch("./json/levels.json").then(e => {
+          e.json().then(json => {
+            let lvl = json["lvl1"];
+
+            let allFloors = new Array();
+            // Adding all floors into queue.
+            lvl.floors.forEach(first_layer => {
+              let first_layer_floor = new Floor(first_layer.x, first_layer.y, first_layer.rotation, null);
+              allFloors.push({
+                  floor: first_layer_floor,
+                  descriptor: first_layer,
+                }
+              );
+
+              // Add children to floor buffer.
+              first_layer.children.forEach(second_layer => {
+                allFloors.push({
+                  floor: new Floor(first_layer.x + second_layer.x, first_layer.y + second_layer.y, second_layer.rotation, first_layer_floor),
+                  descriptor: second_layer,
+                });
+              });
+            });
+
+            // Create each shape for its floor.
+            allFloors.forEach(floor_descriptor => {
+              let info = floor_descriptor.descriptor;
+              switch(info.type){
+                case "rectangle":
+                  floor_descriptor.floor.rectangle(info.width, info.height);
+                break;
+                case "shape":
+                  floor_descriptor.floor.regular_polygon(info.sides, info.radius);
+                break;
+              }
+              floor_descriptor.floor.init();
+              this.floor.push(floor_descriptor.floor);
+            });
+
+            ok();
+          });
+        });
+      });
+
+      levels_queue.then(e => {
+
+        // Initialize player
+        this.entities[0] = new Entity(-300, -140, 10, 14, this);
+        this.camera.lookAt(this.entities[0]);
+  
+        // Play Game
+        this.last_frame = window.performance.now();
+        this.play();
+      });
+    });
+
+
+    // Wait until all is loaded, then play.
   };
 
 };
+
+const game = new Game();

@@ -5,12 +5,11 @@ class Entity extends Shape{
 
   constructor(_x, _y, _w, _h){
     super(_x, _y)
-    super.makeRectangle(_w, _h);
-
+    super.rectangle(_w, _h);
     this.velocity = new Vector(0.01, 0.01);
 
     // Gfx
-    this.sprite = new Vector(26, 36);
+    this.sprite = game.sprites["player"];
     this.gfx_id = 0;
     this.gfx_frame = 0;
 
@@ -32,7 +31,7 @@ class Entity extends Shape{
     return new Vector();
   }
 
-  draw(game){
+  draw(ctx){
     // Update Gfx index
     let x_direction = this.coordSystem[0].dot(this.velocity);
     if(!this.isTouchingFloor){
@@ -49,29 +48,28 @@ class Entity extends Shape{
       }
     }
 
-    game.ctx.save();
-      game.ctx.translate(this.position.x, this.position.y);
-      game.ctx.rotate(this.rotation);
+    ctx.save();
+      ctx.translate(this.position.x, this.position.y);
+      ctx.rotate(this.rotation);
 
-      game.ctx.scale(this.last_orientation, 1.0);
-
-      game.ctx.drawImage(
-        game.get_gfx(0),
-        this.gfx_id * this.sprite.x,
+      ctx.scale(this.last_orientation, 1.0);
+      ctx.drawImage(
+        this.sprite.image,
+        this.gfx_id * this.sprite.size.x,
         0.0,
-        this.sprite.x,
-        this.sprite.y,
-        -(this.sprite.x >> 1),
-        -(this.sprite.y >> 1),
-        this.sprite.x,
-        this.sprite.y
+        this.sprite.size.x,
+        this.sprite.size.y,
+        -(this.sprite.size.x >> 1),
+        -(this.sprite.size.y >> 1),
+        this.sprite.size.x,
+        this.sprite.size.y
       );
 
-    game.ctx.restore();
+    ctx.restore();
 
   };
 
-  update(game){
+  update(dt, game){
     let friction = 0.0;
     // If the floor is being touched
     if(this.isTouchingFloor){
@@ -105,7 +103,6 @@ class Entity extends Shape{
       intersect_shapes.forEach(e => {
         this.position = this.position.add(e.repulsive_force);
       });
-      console.log(intersect_shapes[0].body.parent);
       this.objectOver = intersect_shapes[0].body.parent !== null ? intersect_shapes[0].body.parent : intersect_shapes[0].body;
     }else{
       // The object who has the biggest attractive force will be our "planet"
@@ -135,7 +132,7 @@ class Entity extends Shape{
       this.coordSystem[1] = this.objectOver.normals[new_coord];
     }else{ // If we dont find any near segment.
       // Lets find the corner
-      let nearest_edge = this.objectOver.getEdges().map(e => e.subtract(this.position)).sort((a, b) => (a.length - b.length))[0].normalize().scale(-1);
+      let nearest_edge = this.objectOver.edges().map(e => e.subtract(this.position)).sort((a, b) => (a.length - b.length))[0].normalize().scale(-1);
       this.coordSystem[1] = nearest_edge;
     }
     this.coordSystem[0] = this.coordSystem[1].perpendicular().scale(-1);

@@ -30,16 +30,7 @@
         "rotation": 0.0,
         "width": 250,
         "height": 250,
-        "children": [
-          {
-            "x": 100,
-            "y": 450,
-            "type": "rectangle",
-            "rotation": 0.0,
-            "width": 50,
-            "height": 50
-          }
-        ]
+        "children": []
       },
       {
         "x": -250,
@@ -47,8 +38,17 @@
         "type": "shape",
         "rotation": 0.0,
         "radius": 100,
-        "sides": 5,
-        "children": []
+        "sides": 3,
+        "children": [
+          {
+            "x": 120,
+            "y": 0,
+            "type": "rectangle",
+            "rotation": 0.0,
+            "width": 20,
+            "height": 20
+          }
+        ]
       },
       {
         "x": 250,

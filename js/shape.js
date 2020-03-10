@@ -3,40 +3,50 @@
 class Shape{
 
   constructor(_x = 0.0, _y = 0.0){
-    this.position = new Vector(_x, _y, 0.0);
+    this.p = new Vector(_x, _y, 0.0);
     this.collision = null;
     this.normals = null;
     this.rotation = 0.0;
   };
 
-  getEdges(){ return this.collision.map(e=>e.add(this.position)); };
+  get position(){
+    return this.p;
+  };
+
+  set position(p){
+    this.p = p;
+  };
+
+  edges(){ return this.collision.map(e=>e.add(this.position)); };
 
   get mass(){ return this.collision[0].length; };
 
-  draw(game){
-    let edges = this.getEdges();
-    game.ctx.beginPath();
-    game.ctx.moveTo(edges[0].x, edges[0].y);
-    for(let i = 1; i < edges.length; ++i){
-      game.ctx.lineTo(edges[i].x, edges[i].y);
-    }
-    game.ctx.fillStyle = "#e6e6e6";
-    game.ctx.closePath();
-    game.ctx.fill();
+  draw(ctx){
+    ctx.save();
+      ctx.translate(this.position.x, this.position.y);
+      ctx.beginPath();
+      ctx.moveTo(this.collision[0].x, this.collision[0].y);
+      for(let i = 1; i < this.collision.length; ++i){
+        ctx.lineTo(this.collision[i].x, this.collision[i].y);
+      }
+      ctx.fillStyle = "#e6e6e6";
+      ctx.closePath();
+      ctx.fill();
+    ctx.restore();
   };
 
-  makeRectangle(_w, _h){
+  rectangle(_w, _h){
     this.collision = new Array(4);
     this.collision[0] = new Vector(+_w, +_h);
     this.collision[1] = new Vector(-_w, +_h);
     this.collision[2] = new Vector(-_w, -_h);
     this.collision[3] = new Vector(+_w, -_h);
 
-    this.calculateNormals();
+    this.generate_normals();
     return this;
   };
 
-  calculateNormals(){
+  generate_normals(){
     let edges = this.collision;
     this.normals = new Array(edges.length);
     for(let i = 0; i < edges.length - 1; ++i){
@@ -45,7 +55,7 @@ class Shape{
     this.normals[edges.length - 1] = edges[edges.length - 1].subtract(edges[0]).perpendicular().normalize();
   };
 
-  makeRegularPolygon(_n, _l){
+  regular_polygon(_n, _l){
     let angle = 2 * Math.PI / _n;
     this.collision = new Array(_n);
 
@@ -53,7 +63,7 @@ class Shape{
       let theta = angle * i;
       this.collision[i] = new Vector(Math.cos(theta) * _l, Math.sin(theta) * _l);
     }
-    this.calculateNormals();
+    this.generate_normals();
     return this;
   };
 
@@ -77,8 +87,8 @@ class Shape{
   intersect_shapes(shapes){
     let repulsive_forces = new Array();
     shapes.forEach(shape => {
-      let v1 = this.getEdges();
-      let v2 = shape.getEdges();
+      let v1 = this.edges();
+      let v2 = shape.edges();
 
       let axies = [...this.normals, ...shape.normals];
 
@@ -113,4 +123,4 @@ class Shape{
     return repulsive_forces;
   };
 
-}
+};

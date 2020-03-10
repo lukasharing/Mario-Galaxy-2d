@@ -1,6 +1,7 @@
+
+
 window.onload = ()=>{
 
-  const game = new Game();
   game.init();
 
   let timer = 0;
