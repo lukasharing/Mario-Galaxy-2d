@@ -25,12 +25,19 @@ class Floor extends Shape{
     const v1v2 = v2.subtract(v1);
     
     ctx.save();
+      
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(v1.x, v1.y);
+      ctx.lineTo(v2.x, v2.y);
+
+      ctx.clip();
 
       ctx.fillStyle = "#182c3b";
       ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(v1.x, v1.y);
-        ctx.lineTo(v2.x, v2.y);
+        ctx.lineTo(v1.x * 0.99, v1.y * 0.99);
+        ctx.lineTo(v2.x * 0.99, v2.y * 0.99);
       ctx.closePath();
       ctx.fill();
       
@@ -39,14 +46,14 @@ class Floor extends Shape{
       ctx.rotate(v1v2.alpha);
 
       const ds = v1v2.length;
-      for(let i = 0; i < ds; i += 32){
+      for(let i = 0; i < ds; i += sprite.size.x){
         ctx.drawImage(
           sprite.image,
           0,
           0,
           32,
           32,
-          0,
+          -sprite.size.x >> 1,
           0,
           32,
           32
