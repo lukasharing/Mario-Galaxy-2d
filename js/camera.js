@@ -1,4 +1,4 @@
-const CAMERA_ROTATION_DIVISION = 20;
+const CAMERA_ROTATION_SAMPLES = 10;
 
 class Camera{
   constructor(_game){
@@ -20,8 +20,11 @@ class Camera{
     this.position = this.camera_hsize.subtract(this.lookingAt.position);
 
     // Shortest difference between two angles (this.lookingAt.collision.rotation is negative)
-    let diff = ((this.lookingAt.rotation + this.rotation + PI) % PI_2 - PI);
-    this.rotation -= diff / CAMERA_ROTATION_DIVISION;
+    const da = this.lookingAt.rotation + this.rotation;
+    const step = da / CAMERA_ROTATION_SAMPLES;
+    console.log(this.lookingAt.rotation, this.rotation);
+    
+    //this.rotation = (this.rotation - step);
   };
 
 }

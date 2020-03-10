@@ -88,7 +88,6 @@ class Game{
     // 2º Update Entities.
     this.entities.forEach(e=>{ e.update(dt, this); });
 
-
     this.camera.update();
   };
 
@@ -109,7 +108,7 @@ class Game{
       this.ctx.translate(-this.width / 2, -this.height / 2);
       this.ctx.translate(this.camera.position.x, this.camera.position.y);
 
-      this.draw_gravitational_map();
+      //this.draw_gravitational_map();
       // Draw Everithing Else
       this.floor.forEach(e=>{ e.draw(this.ctx); });
       this.entities.forEach(e=>{ e.draw(this.ctx); });
@@ -157,7 +156,7 @@ class Game{
     for(let i = 0; i < last_element; ++i){
       let ps = new Vector(vector.x - v2[i].x, vector.y - v2[i].y);
       let nr = floor.normals[i];
-      let ds = nr.dot(ps) < 0.0 ? 1e10 : getDistanceSegment(v2[i], v2[i + 1], vector);
+      let ds = nr.dot(ps) < EPSILON ? 1e10 : getDistanceSegment(v2[i], v2[i + 1], vector);
       if(ds < last){
         k = i;
       }
@@ -165,7 +164,7 @@ class Game{
 
     let ps = new Vector(vector.x - v2[last_element].x, vector.y - v2[last_element].y);
     let nr = floor.normals[last_element];
-    let ds = nr.dot(ps) < 0.0 ? 1e10 : getDistanceSegment(v2[last_element], v2[0], vector);
+    let ds = nr.dot(ps) < EPSILON ? 1e10 : getDistanceSegment(v2[last_element], v2[0], vector);
     return ds < last ? last_element : k;
   };
 

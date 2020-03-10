@@ -83,8 +83,7 @@ class Entity extends Shape{
     // Rotating the collision Box
     let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
     let df = angle - this.rotation;
-    if(df != 0.0){ this.rotate(df); }
-
+    if(Math.abs(df) > EPSILON){ this.rotate(df); }
 
     /* Update Forces */
     // Friction interaction

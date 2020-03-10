@@ -1,7 +1,3 @@
-const PI = Math.PI;
-const PI_2 = 2 * PI;
-const H_PI = PI / 2;
-
 class Vector {
   constructor(_x = 0.0, _y = 0.0, _z = 0.0) {
     this.x = _x;

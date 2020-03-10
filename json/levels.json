@@ -28,13 +28,13 @@
         "y": 0,
         "type": "rectangle",
         "rotation": 0.0,
-        "width": 250,
-        "height": 250,
+        "width": 200,
+        "height": 200,
         "children": []
       },
       {
-        "x": -250,
-        "y": -350,
+        "x": 250,
+        "y": 350,
         "type": "shape",
         "rotation": 0.01,
         "radius": 100,
@@ -51,11 +51,11 @@
         ]
       },
       {
-        "x": 250,
-        "y": 350,
+        "x": -250,
+        "y": -350,
         "type": "shape",
-        "rotation": 0.01,
-        "radius": 100,
+        "rotation": 0.0,
+        "radius": 75,
         "sides": 5,
         "children": []
       }
