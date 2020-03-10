@@ -36,7 +36,7 @@
         "x": -250,
         "y": -350,
         "type": "shape",
-        "rotation": 0.0,
+        "rotation": 0.01,
         "radius": 100,
         "sides": 3,
         "children": [
@@ -54,9 +54,9 @@
         "x": 250,
         "y": 350,
         "type": "shape",
-        "rotation": 0.0,
+        "rotation": 0.01,
         "radius": 100,
-        "sides": 6,
+        "sides": 5,
         "children": []
       }
     ]

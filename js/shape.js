@@ -58,7 +58,6 @@ class Shape{
   regular_polygon(_n, _l){
     let angle = 2 * Math.PI / _n;
     this.collision = new Array(_n);
-
     for(let i = 0; i < _n; ++i){
       let theta = angle * i;
       this.collision[i] = new Vector(Math.cos(theta) * _l, Math.sin(theta) * _l);

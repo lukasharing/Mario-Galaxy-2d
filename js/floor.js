@@ -6,6 +6,8 @@ class Floor extends Shape{
     this.angular_velocity = _vangular;
 
     this.texture = null;
+
+    this.shift = new Vector();
   };
 
   init(){
@@ -36,39 +38,30 @@ class Floor extends Shape{
       ctx.translate(v1.x, v1.y);
       ctx.rotate(v1v2.alpha);
 
-      const ds = v1v2.length;
-      for(let i = 0; i < ds; i += sprite.size.x){
-        ctx.drawImage(
-          sprite.image,
-          0,
-          0,
-          32,
-          32,
-          -sprite.size.x >> 1,
-          0,
-          32,
-          32
-        );
+      const steps = Math.ceil(v1v2.length / sprite.size.x);
+      for(let i = 0; i < steps; ++i){
+        ctx.drawImage(sprite.image, 0, 0, 32, 32, 0, 0, 32, 32);
         ctx.translate(sprite.size.x, 0);
       }
     ctx.restore();
-
-    /*ctx.save();
-      ctx.globalAlpha = 0.2;
-      ctx.fillStyle = "red";
-      ctx.beginPath();
-      ctx.rect(-this.texture.width >> 1, -this.texture.height >> 1, this.texture.width, this.texture.height);
-      ctx.fill();
-    ctx.restore();*/
   };
 
   generate_texture(){
 
     const canvas = this.texture = document.createElement("canvas");
+    console.log(this.collision)
     const xs = this.collision.map(e => e.x);
     const ys = this.collision.map(e => e.y);
-    const dw = Math.max(...xs) - Math.min(...xs);
-    const dh = Math.max(...ys) - Math.min(...ys);
+    const minx = Math.min(...xs);
+    const miny = Math.min(...ys);
+    
+    // Helper to Move Points To Positive Cuadrant
+    this.shift.x = minx;
+    this.shift.y = miny;
+
+    const dw = Math.max(...xs) - minx;
+    const dh = Math.max(...ys) - miny;
+
     canvas.width = dw;
     canvas.height = dh;
 
@@ -76,7 +69,7 @@ class Floor extends Shape{
 
     ctx.save();
 
-      ctx.translate(dw >> 1, dh >> 1);
+      ctx.translate(-this.shift.x, -this.shift.y);
 
       // Create Dark Area
       ctx.save();
@@ -115,8 +108,9 @@ class Floor extends Shape{
 
   draw(ctx){
     ctx.save();
-      ctx.translate(this.p.x, this.p.y);
-      ctx.translate(-this.texture.width >> 1, -this.texture.height >> 1);
+      ctx.translate(this.position.x, this.position.y);
+      ctx.rotate(this.rotation);
+      ctx.translate(this.shift.x, this.shift.y);
       ctx.drawImage(this.texture, 0., 0.);
     ctx.restore();
   };
