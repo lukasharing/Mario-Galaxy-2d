@@ -5,10 +5,18 @@ class Camera{
     this.game = _game;
     this.lookingAt;
     this.position;
-    this.rotation = 0.0;
+
+    // Rotation
+    this.rotation_speed = 2.;
+    this.rotation_time = 0.0;
+    this.from_rotation = 0.0;
+    this.current_rotation = 0.0;
 
     this.camera_hsize = new Vector(_game.width >> 1, _game.height >> 1);
   };
+
+  set rotation(a){ this.current_rotation = a; };
+  get rotation(){ return this.current_rotation; };
 
   lookAt(_entity){
     this.lookingAt = _entity;
@@ -16,11 +24,42 @@ class Camera{
     this.rotation = _entity.rotation;
   };
 
-  update(){
-    this.position = this.camera_hsize.subtract(this.lookingAt.position);
+  update(dt){
 
-    // Shortest difference between two angles (this.lookingAt.collision.rotation is negative)
-    this.rotation += (this.lookingAt.rotation - this.rotation) / CAMERA_ROTATION_SAMPLES;
+    let from = this.from_rotation;
+    let to = this.lookingAt.rotation;
+    // Check If there is a shortes path (from the other side)
+    const dr = from - to;
+    if(Math.abs(dr) > PI){
+      to += Math.sign(dr) * TAU;
+    }
+
+    if(Math.abs(dr) > EPSILON){
+      this.rotation_time += 0.1;
+
+      let t = this.rotation_time / this.rotation_speed;
+      // Camera Interpolation
+      t = t * t * (3 - 2 * t);
+
+      this.current_rotation = positive_radians(mix(from, to, t));
+      
+      if(t >= 1.0){
+        this.from_rotation = this.current_rotation;
+        this.rotation_time = 0.0;
+      }
+    }
+
+    this.position = this.camera_hsize.subtract(this.lookingAt.position);
+ 
+  };
+
+  draw_gui(ctx){
+
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.font = "20px Verdana";
+    ctx.fillText(`${this.game.fps.toFixed(1)}fps`, 10, 30);
+
   };
 
 }

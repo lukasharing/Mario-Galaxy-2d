@@ -67,7 +67,7 @@ class Shape{
   };
 
   rotate(angle){
-    this.rotation = (this.rotation + angle) % TAU;
+    this.rotation = positive_radians(this.rotation + angle);
 
     let cs = Math.cos(angle), sn = Math.sin(angle);
     for(let i = 0; i < this.collision.length; ++i){

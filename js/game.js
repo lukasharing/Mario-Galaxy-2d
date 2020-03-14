@@ -98,25 +98,23 @@ class Game{
     this.ctx.rect(0, 0, this.width, this.height);
     this.ctx.fill();
 
-    // Render GUI
-    this.ctx.beginPath();
-    this.ctx.font = "20px Verdana";
-    this.ctx.fillText(`${this.fps.toFixed(1)}fps`, 10, 30);
-
     // Render Main Graphics
     this.ctx.save();
       // Translate Camera
       this.ctx.translate(this.width / 2, this.height / 2);
-      this.ctx.rotate(this.camera.rotation);
+      this.ctx.rotate(-this.camera.rotation);
       this.ctx.translate(-this.width / 2, -this.height / 2);
       this.ctx.translate(this.camera.position.x, this.camera.position.y);
 
-      this.draw_gravitational_map();
+      //this.draw_gravitational_map();
       // Draw Everithing Else
       this.floor.forEach(e=>{ e.draw(this.ctx); });
       this.entities.forEach(e=>{ e.draw(this.ctx); });
 
     this.ctx.restore();
+
+    // Render GUI
+    this.camera.draw_gui(this.ctx);
   };
 
   play(time){

@@ -7,7 +7,7 @@ class Vector {
 
   // GETTER / SETTER
   get length(){ return Math.sqrt(this.dot(this)); };
-  get alpha(){ return Math.atan2(this.y, this.x); };
+  get alpha(){ return Math.atan2(-this.y, -this.x) + PI; };
 
   dot(_v){ return (this.x * _v.x + this.y * _v.y + this.z * _v.z); };
   angle(_v){ return Math.acos(this.dot(_v) / (_v.length * this.length)); };

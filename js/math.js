@@ -1,11 +1,11 @@
-const EPSILON = 0.01;
+const EPSILON = 0.001;
 const PI = Math.PI;
 const TAU = 2 * PI;
 const HPI = PI / 2;
 const PI2DEG = TAU / 360;
 const DEG2PI = 360 / TAU;
 
-const mix = (a, b, k) => a * k + (1 - k) * b;
+const mix = (a, b, k) => a * (1 - k) + k * b;
 const lerp = (a, b, c, d) => (a - b) / (c - d) * d + c;
 const step = (a, b, c) => c < 0.5 ? a : b;
 const positive_radians = (a) => ((a % TAU) + TAU) % TAU; 
