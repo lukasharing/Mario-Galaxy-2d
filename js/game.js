@@ -13,7 +13,8 @@ class Game{
   constructor(){
     this.keys = new Array(256).fill(0);
 
-    // Game size
+    // Game
+    this.canvas = null;
     this.width = 0;
     this.height = 0;
 
@@ -83,17 +84,19 @@ class Game{
 
   update(dt){
     // 1º Update Floors.
-    this.floor.forEach(e=>{ e.update(dt); });
+    this.floor.forEach(e => e.update(dt));
 
     // 2º Update Entities.
-    this.entities.forEach(e=>{ e.update(dt, this); });
+    this.entities.forEach(e => e.update(dt, this));
 
     this.camera.update();
   };
 
   render(){
     //this.ctx.imageSmoothingEnabled = false;
-    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.fillStyle = "#50ceff";
+    this.ctx.rect(0, 0, this.width, this.height);
+    this.ctx.fill();
 
     // Render GUI
     this.ctx.beginPath();
@@ -108,7 +111,7 @@ class Game{
       this.ctx.translate(-this.width / 2, -this.height / 2);
       this.ctx.translate(this.camera.position.x, this.camera.position.y);
 
-      //this.draw_gravitational_map();
+      this.draw_gravitational_map();
       // Draw Everithing Else
       this.floor.forEach(e=>{ e.draw(this.ctx); });
       this.entities.forEach(e=>{ e.draw(this.ctx); });
@@ -170,7 +173,7 @@ class Game{
 
 
   draw_gravitational_map(){
-    const division = 20;
+    const division = 50;
     let angle_space = this.camera.rotation;
     let cs = Math.cos(angle_space), sn = Math.sin(angle_space);
 
@@ -190,13 +193,13 @@ class Game{
     for(let j = -rh; j <= rh; j += py){
       for(let i = -rw; i <= rw; i += px){
         let vector = new Vector(i, j, 0.0).subtract(vector_space);
-        let fc = this.getForceInPoint(vector);
+        let fc = this.force_in_point(vector);
         let new_coord = this.nearest_side(vector, fc.body); // Get the ID.
         if(new_coord >= 0){
           let vc = fc.body.normals[new_coord];
           this.ctx.beginPath();
           this.ctx.moveTo(vector.x, vector.y);
-          this.ctx.lineTo(vector.x - vc.x * 10, vector.y - vc.y * 10);
+          this.ctx.lineTo(vector.x - vc.x * 5, vector.y - vc.y * 5);
           this.ctx.stroke();
         }else{
           // Find Nearest Vertice
@@ -211,7 +214,7 @@ class Game{
   };
 
 
-  getForceInPoint(entity){
+  force_in_point(entity){
     let gravitational_element = {body: null, force: new Vector(), length: 0.0};
     
     for(let i = 0; i < this.floor.length; ++i){
@@ -234,12 +237,16 @@ class Game{
 
   };
 
+  resize(){
+    this.canvas.width = this.width = window.innerWidth;
+    this.canvas.height = this.height = window.innerHeight;
+  };
+
   init(){
     // Initialize Canvas
-    const canvas = document.getElementById("game");
-    canvas.width = this.width = 700;
-    canvas.height = this.height = 500;
-    this.ctx = canvas.getContext("2d");
+    this.canvas = document.getElementById("game");
+    this.ctx = this.canvas.getContext("2d");
+    this.resize();
 
     // Initialize Camera
     this.camera = new Camera(this);
@@ -304,7 +311,6 @@ class Game{
       });
 
       levels_queue.then(e => {
-
         // Initialize player
         this.entities[0] = new Entity(-300, -140, 10, 14, this);
         this.camera.lookAt(this.entities[0]);

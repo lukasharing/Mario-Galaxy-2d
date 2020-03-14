@@ -105,7 +105,7 @@ class Entity extends Shape{
       this.objectOver = intersect_shapes[0].body.parent !== null ? intersect_shapes[0].body.parent : intersect_shapes[0].body;
     }else{
       // The object who has the biggest attractive force will be our "planet"
-      this.objectOver = game.getForceInPoint(this.position).body;
+      this.objectOver = game.force_in_point(this.position).body;
     }
     // 2. Remove Gravity Simulation
     this.position = this.position.subtract(last_velocity_state);

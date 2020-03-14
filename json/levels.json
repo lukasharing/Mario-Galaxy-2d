@@ -24,35 +24,8 @@
 
     "floors" : [
       {
-        "x": 0,
-        "y": 0,
-        "type": "rectangle",
-        "rotation": 0.0,
-        "width": 200,
-        "height": 200,
-        "children": []
-      },
-      {
-        "x": 250,
-        "y": 350,
-        "type": "shape",
-        "rotation": 0.01,
-        "radius": 100,
-        "sides": 3,
-        "children": [
-          {
-            "x": 120,
-            "y": 0,
-            "type": "rectangle",
-            "rotation": 0.0,
-            "width": 20,
-            "height": 20
-          }
-        ]
-      },
-      {
-        "x": -250,
-        "y": -350,
+        "x": -300,
+        "y": -400,
         "type": "shape",
         "rotation": 0.0,
         "radius": 75,
