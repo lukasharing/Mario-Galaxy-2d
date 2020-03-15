@@ -6,8 +6,13 @@
     "frames": 5
   },
   "tiles": {
-    "src": "tiles-new.png",
+    "src": "tiles.png",
     "width": 32,
     "height": 32
+  },
+  "slime": {
+    "src": "enemies/sprite-slime.png",
+    "width": 44,
+    "height": 30
   }
 }

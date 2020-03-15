@@ -1,140 +1,134 @@
-// ENTITIES SHOULD HAVE ALL THE SAME PATTERN
-const SPRITE = {  };
-
 class Entity extends Shape{
 
-  constructor(_x, _y, _w, _h){
-    super(_x, _y)
-    super.rectangle(_w, _h);
-    this.velocity = new Vector(0.01, 0.01);
+	constructor(_x, _y, _w, _h){
+		super(_x, _y)
+		super.rectangle(_w, _h);
+		this.velocity = new Vector(0.01, 0.01);
 
-    // Gfx
-    this.sprite = game.sprites["player"];
-    this.gfx_id = 0;
-    this.gfx_frame = 0;
+		// Gfx
+		this.sprite = null;
+		this.gfx_id = 0;
+		this.gfx_frame = 0;
 
-    // Physics
-    this.coordSystem = [new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0)];
-    this.last_orientation = 1;
-    this.objectOver = null;
-    this.isJumping = false;
-    this.isTouchingFloor = false;
-    this.friction = 0.98;
-  };
+		// Physics
+		this.coordSystem = [new Vector(0.0, 0.0, 0.0), new Vector(0.0, 0.0, 0.0)];
+		this.objectOver = null;
+		
+		this.isJumping = false;
 
-  jump(factor){
-    if(this.isJumping < 0){
-      this.isTouchingFloor = false;
-      this.isJumping = 4;
-      return this.coordSystem[1].scale(factor);
-    }
-    return new Vector();
-  }
+		this.isTouchingFloor = false;
+		this.friction = 0.98;
 
-  draw(ctx){
-    // Update Gfx index
-    let x_direction = this.coordSystem[0].dot(this.velocity);
-    if(!this.isTouchingFloor){
-      let y_direction = this.coordSystem[1].dot(this.velocity);
-      this.gfx_id = Math.sign(y_direction) > 0 ? 2 : 3;
-    }else{
-      if(Math.abs(x_direction) > 1){
-        this.last_orientation = -Math.sign(x_direction);
-        ++this.gfx_frame;
-        this.gfx_id = (this.gfx_frame >> 3) & 1;
-      }else{
-        this.gfx_frame = 0;
-        this.gfx_id = 0;
-      }
-    }
+		// Direction
+		this.x_direction = 0;
+		this.y_direction = 0;
+	};
 
-    ctx.save();
-      ctx.translate(this.position.x, this.position.y);
-      ctx.rotate(this.rotation);
+	move_left(force = 1.0){
+		this.velocity = this.velocity.add(this.coordSystem[0].scale(force));
+	};
 
-      ctx.scale(this.last_orientation, 1.0);
-      ctx.drawImage(
-        this.sprite.image,
-        this.gfx_id * this.sprite.size.x,
-        0.0,
-        this.sprite.size.x,
-        this.sprite.size.y,
-        -(this.sprite.size.x >> 1),
-        -(this.sprite.size.y >> 1),
-        this.sprite.size.x,
-        this.sprite.size.y
-      );
+	move_right(force = 1.0){
+		this.velocity = this.velocity.subtract(this.coordSystem[0].scale(force));
+	};
 
-    ctx.restore();
+	jump(factor = 20.0){
+		if(this.isJumping < 0){
+			this.isTouchingFloor = false;
+			this.isJumping = 4;
+			this.velocity = this.velocity.add(this.coordSystem[1].scale(factor));
+		}
+	};
 
-  };
+	draw(ctx){
+		
+		this.x_direction = this.coordSystem[0].dot(this.velocity);
+		this.y_direction = this.coordSystem[1].dot(this.velocity);
 
-  update(dt, game){
-    let friction = 0.0;
-    // If the floor is being touched
-    if(this.isTouchingFloor){
-      --this.isJumping;
-      friction = 0.75; // Friction on the floor
-    }else{
-      //
-      friction = Math.sign(this.coordSystem[1].dot(this.velocity)) > 0 ? 0.9 : 0.98;
-    }
+		ctx.save();
+			ctx.translate(this.position.x, this.position.y);
+			ctx.rotate(this.rotation);
+			ctx.scale(-Math.sign(this.x_direction), 1.0);
+			ctx.drawImage(
+				this.sprite.image,
+				this.gfx_id * this.sprite.size.x,
+				0.0,
+				this.sprite.size.x,
+				this.sprite.size.y,
+				-(this.sprite.size.x >> 1),
+				-(this.sprite.size.y >> 1),
+				this.sprite.size.x,
+				this.sprite.size.y
+			);
+		ctx.restore();
+	};
 
-    // Rotating the collision Box
-    let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
-    let df = angle - this.rotation;
-    if(Math.abs(df) > EPSILON){ this.rotate(df); }
+	update(dt, game){
+		let friction = 0.0;
+		// If the floor is being touched
+		if(this.isTouchingFloor){
+			--this.isJumping;
+			friction = 0.75; // Friction on the floor
+		}else{
+			// On the air
+			friction = Math.sign(this.coordSystem[1].dot(this.velocity)) > 0 ? 0.9 : 0.98;
+		}
 
-    /* Update Forces */
-    // Friction interaction
-    this.velocity = this.velocity.scale(friction);
-    // Add Gravity
-    let last_velocity_state = null;
-    let imaginary_velocity = last_velocity_state = this.velocity.subtract(this.coordSystem[1]);
+		// Rotating the collision Box
+		let angle = Math.atan2(this.coordSystem[1].x, -this.coordSystem[1].y);
+		let df = angle - this.rotation;
+		if(Math.abs(df) > EPSILON){ this.rotate(df); }
 
-    // Get all intersections
-    // 1. Simulate Fake Gravity ()
-    this.position = this.position.add(last_velocity_state);
-    let intersect_shapes = this.intersect_shapes(game.floor);
-    if(intersect_shapes.length > 0){
-      imaginary_velocity = this.velocity;
-      this.isTouchingFloor = true;
-      intersect_shapes.forEach(e => {
-        this.position = this.position.add(e.repulsive_force);
-      });
-      this.objectOver = intersect_shapes[0].body.parent !== null ? intersect_shapes[0].body.parent : intersect_shapes[0].body;
-    }else{
-      // The object who has the biggest attractive force will be our "planet"
-      this.objectOver = game.force_in_point(this.position).body;
-    }
-    // 2. Remove Gravity Simulation
-    this.position = this.position.subtract(last_velocity_state);
+		/* Update Forces */
+		// Friction interaction
+		this.velocity = this.velocity.scale(friction);
+		// Add Gravity
+		let last_velocity_state = null;
+		let imaginary_velocity = last_velocity_state = this.velocity.subtract(this.coordSystem[1]);
 
-    // 3. Apply Real Gravity
-    this.velocity = imaginary_velocity;
-    this.position = this.position.add(this.velocity);
+		// Get all intersections
+		// 1. Simulate Fake Gravity ()
+		this.position = this.position.add(last_velocity_state);
+		let intersect_shapes = this.intersect_shapes(game.floor);
+		if(intersect_shapes.length > 0){
+			imaginary_velocity = this.velocity;
+			this.isTouchingFloor = true;
+			intersect_shapes.forEach(e => {
+				this.position = this.position.add(e.repulsive_force);
+			});
+			this.objectOver = intersect_shapes[0].body.parent !== null ? intersect_shapes[0].body.parent : intersect_shapes[0].body;
+		}else{
+			// The object who has the biggest attractive force will be our "planet"
+			this.objectOver = game.force_in_point(this.position).body;
+		}
+		// 2. Remove Gravity Simulation
+		this.position = this.position.subtract(last_velocity_state);
 
-    // Conservation of momentum, object placed on top of other should rotate together
-    // TODO: Check if set this.objectOver = first floor.
-    if(this.objectOver.angular_velocity != 0.0){
-      this.rotate(this.objectOver.angular_velocity);
-      let vb = new Vector(this.position.x - this.objectOver.position.x, this.position.y - this.objectOver.position.y);
-      let vr = vb.rotate(this.objectOver.angular_velocity);
-      let ds = vr.subtract(vb);
-      this.position = this.position.add(ds);
-    }
+		// 3. Apply Real Gravity
+		this.velocity = imaginary_velocity;
+		this.position = this.position.add(this.velocity);
 
-    // If there exist a segment where the "player's shadows" cast over from the element we are gravitating,
-    // The vector of the segment and its perpendicular will be our system coordinate
-    let new_coord = game.nearest_side(this.position, this.objectOver); // Get the ID.
-    if(new_coord >= 0){ // If we find
-      this.coordSystem[1] = this.objectOver.normals[new_coord];
-    }else{ // If we dont find any near segment.
-      // Lets find the corner
-      let nearest_edge = this.objectOver.edges().map(e => e.subtract(this.position)).sort((a, b) => (a.length - b.length))[0].normalize().scale(-1);
-      this.coordSystem[1] = nearest_edge;
-    }
-    this.coordSystem[0] = this.coordSystem[1].perpendicular().scale(-1);
-  };
+		// Conservation of momentum, object placed on top of other should rotate together
+		// TODO: Check if set this.objectOver = first floor.
+		if(this.objectOver.angular_velocity != 0.0){
+			this.rotate(this.objectOver.angular_velocity);
+			let vb = new Vector(this.position.x - this.objectOver.position.x, this.position.y - this.objectOver.position.y);
+			let vr = vb.rotate(this.objectOver.angular_velocity);
+			let ds = vr.subtract(vb);
+			this.position = this.position.add(ds);
+		}
+
+		// If there exist a segment where the "player's shadows" cast over from the element we are gravitating,
+		// The vector of the segment and its perpendicular will be our system coordinate
+		let new_coord = game.nearest_side(this.position, this.objectOver); // Get the ID.
+		if(new_coord >= 0){ // If we find
+			this.coordSystem[1] = this.objectOver.normals[new_coord];
+		}else{ // If we dont find any near segment.
+			// Lets find the corner
+			let nearest_edge = this.objectOver.edges().map(e => e.subtract(this.position)).sort((a, b) => (a.length - b.length))[0].normalize().scale(-1);
+			this.coordSystem[1] = nearest_edge;
+		}
+		this.coordSystem[0] = this.coordSystem[1].perpendicular().scale(-1);
+	};
 
 }

@@ -63,22 +63,21 @@ class Game{
           v = v.subtract(VECTOR_T);
         }
       }else{
-        if(this.keys[37] > 0){
+        if(this.keys[37] > 0){ // Left
           ++this.keys[37];
-          v = v.add(this.entities[0].coordSystem[0].scale(1.0));
+          this.entities[0].move_left(1.0);
         }
 
         if(this.keys[39] > 0){
           ++this.keys[39];
-          v = v.subtract(this.entities[0].coordSystem[0].scale(1.0));
+          this.entities[0].move_right(1.0);
         }
 
         if(this.keys[32] > 0){
           ++this.keys[32];
-          v = v.add(this.entities[0].jump(20.0));
+          this.entities[0].jump(20.);
         }
       }
-      this.entities[0].velocity = v;
     }
   }
 
@@ -310,7 +309,8 @@ class Game{
 
       levels_queue.then(e => {
         // Initialize player
-        this.entities[0] = new Entity(-300, -140, 10, 14, this);
+        this.entities[0] = new Player(-300, -140, this);
+        this.entities[1] = new Slime(-340, -140, this);
         this.camera.lookAt(this.entities[0]);
   
         // Play Game

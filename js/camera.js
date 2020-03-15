@@ -42,7 +42,7 @@ class Camera{
       t = t * t * (3 - 2 * t);
 
       this.current_rotation = positive_radians(mix(from, to, t));
-      
+
       if(t >= 1.0){
         this.from_rotation = this.current_rotation;
         this.rotation_time = 0.0;
