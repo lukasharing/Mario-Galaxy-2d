@@ -33,8 +33,6 @@ class Game{
     this.last_time = 0;
     this.frames = 0;
     this.max_frames = 1000 / 60;
-
-    this.DEBUG = false;
   };
 
   get_gfx(id){ return this.cache_gfx[id]; };
@@ -44,39 +42,24 @@ class Game{
 
   keycontroller(){
     if(this.entities[0].coordSystem[0] !== null){
+      if(this.keys[37] > 0){ // Left
+        ++this.keys[37];
+        this.entities[0].move_left(1.0);
+      }
 
-      let v = this.entities[0].velocity;
-      if(this.DEBUG){
-        if(this.keys[37] > 0){
-          v = v.add(VECTOR_L);
-        }
+      if(this.keys[39] > 0){
+        ++this.keys[39];
+        this.entities[0].move_right(1.0);
+      }
 
-        if(this.keys[39] > 0){
-          v = v.subtract(VECTOR_L);
-        }
-
-        if(this.keys[38] > 0){
-          v = v.add(VECTOR_T);
-        }
-
-        if(this.keys[40] > 0){
-          v = v.subtract(VECTOR_T);
-        }
-      }else{
-        if(this.keys[37] > 0){ // Left
-          ++this.keys[37];
-          this.entities[0].move_left(1.0);
-        }
-
-        if(this.keys[39] > 0){
-          ++this.keys[39];
-          this.entities[0].move_right(1.0);
-        }
-
-        if(this.keys[32] > 0){
-          ++this.keys[32];
-          this.entities[0].jump(20.);
-        }
+      if(this.keys[38] > 0){
+        ++this.keys[38];
+        this.entities[0].jump(30.);
+      }
+      
+      if(this.keys[32] > 0){
+        ++this.keys[32];
+        //this.entities[0].attack(20.);
       }
     }
   }
@@ -231,7 +214,7 @@ class Game{
   }
 
   load_level(i){
-
+    
   };
 
   resize(){
@@ -271,7 +254,11 @@ class Game{
             let allFloors = new Array();
             // Adding all floors into queue.
             lvl.floors.forEach(first_layer => {
-              let first_layer_floor = new Floor(first_layer.x, first_layer.y, first_layer.rotation, null);
+
+              let x_floor = first_layer.position[0];
+              let y_floor = first_layer.position[1];
+
+              let first_layer_floor = new Floor(x_floor, y_floor, first_layer.rotation, null);
               allFloors.push({
                   floor: first_layer_floor,
                   descriptor: first_layer,
@@ -280,8 +267,12 @@ class Game{
 
               // Add children to floor buffer.
               first_layer.children.forEach(second_layer => {
+
+                let x_child = x_floor - second_layer.position[0];
+                let y_child = y_floor - second_layer.position[1];
+
                 allFloors.push({
-                  floor: new Floor(first_layer.x + second_layer.x, first_layer.y + second_layer.y, second_layer.rotation, first_layer_floor),
+                  floor: new Floor(x_child, y_child, second_layer.rotation, first_layer_floor),
                   descriptor: second_layer,
                 });
               });
@@ -310,7 +301,18 @@ class Game{
       levels_queue.then(e => {
         // Initialize player
         this.entities[0] = new Player(-300, -140, this);
-        this.entities[1] = new Slime(-340, -140, this);
+        /*for(let i = 1; i < 10; ++i){
+          this.entities[i] = new Slime(
+            (Math.random() * 2 - 1) * 800, 
+            (Math.random() * 2 - 1) * 800, 
+            this);
+        }
+        for(let i = 10; i < 20; ++i){
+          this.entities[i] = new Enemy1(
+            (Math.random() * 2 - 1) * 800, 
+            (Math.random() * 2 - 1) * 800, 
+            this);
+        }*/
         this.camera.lookAt(this.entities[0]);
   
         // Play Game
@@ -318,9 +320,6 @@ class Game{
         this.play();
       });
     });
-
-
-    // Wait until all is loaded, then play.
   };
 
 };

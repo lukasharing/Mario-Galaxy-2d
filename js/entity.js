@@ -71,7 +71,7 @@ class Entity extends Shape{
 			friction = 0.75; // Friction on the floor
 		}else{
 			// On the air
-			friction = Math.sign(this.coordSystem[1].dot(this.velocity)) > 0 ? 0.9 : 0.98;
+			friction = Math.sign(this.coordSystem[1].dot(this.velocity)) > 0 ? 0.9 : 0.99;
 		}
 
 		// Rotating the collision Box
@@ -83,19 +83,19 @@ class Entity extends Shape{
 		// Friction interaction
 		this.velocity = this.velocity.scale(friction);
 		// Add Gravity
-		let last_velocity_state = null;
-		let imaginary_velocity = last_velocity_state = this.velocity.subtract(this.coordSystem[1]);
+		let last_velocity_state = this.velocity.subtract(this.coordSystem[1]);
 
 		// Get all intersections
 		// 1. Simulate Fake Gravity ()
 		this.position = this.position.add(last_velocity_state);
-		let intersect_shapes = this.intersect_shapes(game.floor);
+		const intersect_shapes = this.intersect_shapes(game.floor);
 		if(intersect_shapes.length > 0){
-			imaginary_velocity = this.velocity;
-			this.isTouchingFloor = true;
+			this.isTouchingFloor = false;
 			intersect_shapes.forEach(e => {
 				this.position = this.position.add(e.repulsive_force);
+				this.isTouchingFloor |= e.repulsive_force.normalize().dot(this.coordSystem[1]) > 0.0;
 			});
+
 			this.objectOver = intersect_shapes[0].body.parent !== null ? intersect_shapes[0].body.parent : intersect_shapes[0].body;
 		}else{
 			// The object who has the biggest attractive force will be our "planet"
@@ -105,7 +105,7 @@ class Entity extends Shape{
 		this.position = this.position.subtract(last_velocity_state);
 
 		// 3. Apply Real Gravity
-		this.velocity = imaginary_velocity;
+		this.velocity = last_velocity_state;
 		this.position = this.position.add(this.velocity);
 
 		// Conservation of momentum, object placed on top of other should rotate together
@@ -121,6 +121,7 @@ class Entity extends Shape{
 		// If there exist a segment where the "player's shadows" cast over from the element we are gravitating,
 		// The vector of the segment and its perpendicular will be our system coordinate
 		let new_coord = game.nearest_side(this.position, this.objectOver); // Get the ID.
+
 		if(new_coord >= 0){ // If we find
 			this.coordSystem[1] = this.objectOver.normals[new_coord];
 		}else{ // If we dont find any near segment.

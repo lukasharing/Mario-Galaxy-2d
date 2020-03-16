@@ -14,5 +14,11 @@
     "src": "enemies/sprite-slime.png",
     "width": 44,
     "height": 30
+  },
+  "enemy-1": {
+    "src": "enemies/sprite-enemy1.png",
+    "width": 30,
+    "height": 38
   }
+  
 }

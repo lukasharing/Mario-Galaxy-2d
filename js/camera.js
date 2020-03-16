@@ -37,7 +37,10 @@ class Camera{
     if(Math.abs(dr) > EPSILON){
       this.rotation_time += 0.1;
 
-      let t = this.rotation_time / this.rotation_speed;
+      let speed = Math.abs(from - to) < 0.1 ? this.rotation_time : this.rotation_speed;
+
+      let t = this.rotation_time / speed;
+
       // Camera Interpolation
       t = t * t * (3 - 2 * t);
 

@@ -49,7 +49,7 @@ class Floor extends Shape{
   generate_texture(){
 
     const canvas = this.texture = document.createElement("canvas");
-    console.log(this.collision)
+    
     const xs = this.collision.map(e => e.x);
     const ys = this.collision.map(e => e.y);
     const minx = Math.min(...xs);

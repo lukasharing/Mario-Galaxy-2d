@@ -83,6 +83,11 @@ class Shape{
     return this;
   };
 
+  /* 
+    This can be optimized:
+    Instead of finding minimum_penetration by sorting nlog(n) iff quicksearch,
+    just make it linear by removing the sort
+  */
   intersect_shapes(shapes){
     let repulsive_forces = new Array();
     shapes.forEach(shape => {

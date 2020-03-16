@@ -31,12 +31,6 @@ class Enemy extends Entity{
   update(dt, game){
     super.update(dt, game);
 
-    this.jump_time += 0.1; // dt
-    if(this.jump_time > this.jump_delay){
-      this.jump_time = 0;
-      super.jump(this.jump_factor);
-    }
-
   };
 
 }
