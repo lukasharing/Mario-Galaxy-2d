@@ -11,8 +11,11 @@ class Camera{
     this.rotation_time = 0.0;
     this.from_rotation = 0.0;
     this.current_rotation = 0.0;
+    this.camera_hsize = new Vector();
+  };
 
-    this.camera_hsize = new Vector(_game.width >> 1, _game.height >> 1);
+  resize(){
+    this.camera_hsize = new Vector(this.game.width >> 1, this.game.height >> 1);
   };
 
   set rotation(a){ this.current_rotation = a; };

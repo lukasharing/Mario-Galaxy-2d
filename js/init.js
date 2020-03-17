@@ -12,4 +12,5 @@ window.onload = ()=>{
   window.addEventListener("click", e=>{
     game.entities[0].collision.position = game.entities[0].position.subtract(game.entities[0].coordSystem[1]);
   });
+  window.addEventListener("resize", e=>game.resize())
 }

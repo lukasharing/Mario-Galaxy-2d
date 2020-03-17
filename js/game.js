@@ -220,16 +220,19 @@ class Game{
   resize(){
     this.canvas.width = this.width = window.innerWidth;
     this.canvas.height = this.height = window.innerHeight;
+    this.camera.resize();
   };
 
   init(){
     // Initialize Canvas
     this.canvas = document.getElementById("game");
     this.ctx = this.canvas.getContext("2d");
-    this.resize();
 
     // Initialize Camera
     this.camera = new Camera(this);
+
+    // Resize
+    this.resize();
 
     
     // Initialize Sprites
@@ -301,18 +304,20 @@ class Game{
       levels_queue.then(e => {
         // Initialize player
         this.entities[0] = new Player(-300, -140, this);
-        /*for(let i = 1; i < 10; ++i){
-          this.entities[i] = new Slime(
-            (Math.random() * 2 - 1) * 800, 
-            (Math.random() * 2 - 1) * 800, 
-            this);
+        if(true){
+          for(let i = 1; i < 10; ++i){
+            this.entities[i] = new Slime(
+              (Math.random() * 2 - 1) * 800, 
+              (Math.random() * 2 - 1) * 800, 
+              this);
+          }
+          for(let i = 10; i < 20; ++i){
+            this.entities[i] = new Enemy1(
+              (Math.random() * 2 - 1) * 800, 
+              (Math.random() * 2 - 1) * 800, 
+              this);
+          }
         }
-        for(let i = 10; i < 20; ++i){
-          this.entities[i] = new Enemy1(
-            (Math.random() * 2 - 1) * 800, 
-            (Math.random() * 2 - 1) * 800, 
-            this);
-        }*/
         this.camera.lookAt(this.entities[0]);
   
         // Play Game
