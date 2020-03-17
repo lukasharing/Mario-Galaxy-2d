@@ -2,6 +2,7 @@ const EPSILON = 0.001;
 const PI = Math.PI;
 const TAU = 2 * PI;
 const HPI = PI / 2;
+const QPI = PI / 4;
 const PI2DEG = TAU / 360;
 const DEG2PI = 360 / TAU;
 

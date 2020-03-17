@@ -8,6 +8,9 @@ const VECTOR_R = new Vector(1, 0);
 const VECTOR_T = new Vector(0, -1);
 const VECTOR_B = new Vector(0, 1);
 
+const SINGLE_TOUCH_MS = 80.0;
+const TOUCH_RADIUS_EFFECT = 50.0;
+
 
 class Game{
   constructor(){
@@ -33,23 +36,27 @@ class Game{
     this.last_time = 0;
     this.frames = 0;
     this.max_frames = 1000 / 60;
+
+    this.touch_origin = new Vector();
+    this.touch_attack = -1;
   };
 
   get_gfx(id){ return this.cache_gfx[id]; };
 
-  pressKey(_key){ ++this.keys[_key]; };
-  unpressKey(_key){ this.keys[_key] = 0; };
+  /* KEYS EVENTS */
+  key_press(_key){ ++this.keys[_key]; };
+  key_unpress(_key){ this.keys[_key] = 0; };
 
-  keycontroller(){
+  key_controller(){
     if(this.entities[0].coordSystem[0] !== null){
       if(this.keys[37] > 0){ // Left
         ++this.keys[37];
-        this.entities[0].move_left(1.0);
+        this.entities[0].move_left(1.);
       }
 
       if(this.keys[39] > 0){
         ++this.keys[39];
-        this.entities[0].move_right(1.0);
+        this.entities[0].move_right(1.);
       }
 
       if(this.keys[38] > 0){
@@ -62,8 +69,83 @@ class Game{
         //this.entities[0].attack(20.);
       }
     }
-  }
+  };
 
+  /* TOUCH EVENTS */
+
+  touch_start(touches){
+    
+    const tx = touches[0].clientX;
+    const ty = touches[0].clientY;
+
+    touchwheel.style.opacity = 1;
+    touchwheel.style.left = `${tx}px`;
+    touchwheel.style.top = `${ty}px`;
+    wheel.style.transform = `translate(0, 0)`;
+
+    const current_time = (new Date()).getTime();
+    
+    this.touch_origin = new Vector(tx, ty);
+
+    if(touches.length > 1){
+      this.touch_attack = current_time;
+    }
+
+  };
+
+  touch_move(touches){
+
+    const touch_coords = new Vector(touches[0].clientX, touches[0].clientY);
+    
+    const dtouch = touch_coords.subtract(this.touch_origin);
+
+    const wheel_position = dtouch.clamp(40.0);
+    wheel.style.transform = `translate(${wheel_position.x}px, ${wheel_position.y}px)`;
+
+    this.id_touch = -1;
+    if(dtouch.length > TOUCH_RADIUS_EFFECT){
+      this.id_touch = Math.floor(positive_radians(dtouch.alpha + QPI) / HPI);
+    }
+
+  };
+
+  touch_end(touches){
+    
+    touchwheel.style.opacity = 0;
+
+    if(touches.length === 0){
+      this.id_touch = -1;
+    }
+
+    const current_time = (new Date()).getTime();
+
+    if(this.touch_attack >= 0 && (current_time - this.touch_attack) < SINGLE_TOUCH_MS){
+      this.touch_attack = -1;
+      //this.entities[0].attack(30.);
+    }
+
+  };
+
+  touch_controller(){
+
+    switch(this.id_touch){
+      case 0: this.entities[0].move_right(1.);  break;
+      case 1: this.entities[0].jump(30.);  break;
+      case 2: this.entities[0].move_left(1.); break; 
+    }
+
+  };
+
+  /* Controller */
+  controller(){
+    // Interrupts (Preference on touch)
+    if(this.id_touch >= 0){
+      this.touch_controller();
+    }else{
+      this.key_controller();
+    }
+  }
+  
   update(dt){
     // 1º Update Floors.
     this.floor.forEach(e => e.update(dt));
@@ -109,8 +191,7 @@ class Game{
       this.last_time = time;
 
       const dt = this.fps / 1000;
-      // Interrupts
-      this.keycontroller();
+      this.controller();
 
       // Game Updates
       this.update(dt);

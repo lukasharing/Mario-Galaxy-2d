@@ -1,3 +1,8 @@
+:root{
+  --size-wheel: 100px;
+  --size-controller: 30px;
+}
+
 html, body{
   overflow: hidden;
   width: 100%;
@@ -16,4 +21,28 @@ body{
   display: block;
   background: white;
   margin: 0 auto;
+}
+
+#touchwheel{
+  z-index: 9;
+  opacity: 0;
+  position: absolute;
+  margin-left: calc(var(--size-wheel) / -2);
+  margin-top: calc(var(--size-wheel) / -2);
+  height: var(--size-wheel);
+  width: var(--size-wheel);
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+#wheel{
+  position: relative;
+  left: calc((var(--size-wheel) - var(--size-controller)) / 2);
+  top: calc((var(--size-wheel) - var(--size-controller)) / 2);
+  height: var(--size-controller);
+  width: var(--size-controller);
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(0, 0, 0, 0.9);
 }

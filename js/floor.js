@@ -36,7 +36,7 @@ class Floor extends Shape{
       ctx.clip();
 
       ctx.translate(v1.x, v1.y);
-      ctx.rotate(v1v2.alpha);
+      ctx.rotate(-v1v2.alpha);
 
       const steps = Math.ceil(v1v2.length / sprite.size.x);
       for(let i = 0; i < steps; ++i){
