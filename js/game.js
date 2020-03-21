@@ -26,6 +26,7 @@ class Game{
 
     // Drawing Variables
     this.ctx = null;
+    this.total_entities = 0;
     this.entities = new Array(MAX_ENTITIES); // Entity 0 = Player
     this.sprites = {};
     this.floor = new Array();
@@ -66,7 +67,26 @@ class Game{
       
       if(this.keys[32] > 0){
         ++this.keys[32];
+        this.entities[0].shoot(20.);
         //this.entities[0].attack(20.);
+      }
+    }
+
+    // TWO PLAYER
+    if(true){
+      if(this.keys[65] > 0){ // Left
+        ++this.keys[65];
+        this.entities[1].move_left(1.);
+      }
+      
+      if(this.keys[68] > 0){
+        ++this.keys[68];
+        this.entities[1].move_right(1.);
+      }
+
+      if(this.keys[87] > 0){
+        ++this.keys[87];
+        this.entities[1].jump(30.);
       }
     }
   };
@@ -151,7 +171,11 @@ class Game{
     this.floor.forEach(e => e.update(dt));
 
     // 2º Update Entities.
-    this.entities.forEach(e => e.update(dt, this));
+    this.entities.forEach(e => {
+      if(e.alive){
+        e.update(dt, this);
+      }
+    });
 
     this.camera.update();
   };
@@ -167,13 +191,16 @@ class Game{
       // Translate Camera
       this.ctx.translate(this.width / 2, this.height / 2);
       this.ctx.rotate(-this.camera.rotation);
-      this.ctx.translate(-this.width / 2, -this.height / 2);
-      this.ctx.translate(this.camera.position.x, this.camera.position.y);
+      this.ctx.translate(-this.camera.position.x, -this.camera.position.y);
 
       //this.draw_gravitational_map();
       // Draw Everithing Else
       this.floor.forEach(e=>{ e.draw(this.ctx); });
-      this.entities.forEach(e=>{ e.draw(this.ctx); });
+      this.entities.forEach(e=>{
+        if(e.alive){ 
+          e.draw(this.ctx);
+        }
+      });
 
     this.ctx.restore();
 
@@ -304,6 +331,16 @@ class Game{
     this.camera.resize();
   };
 
+  append_entity(entity_type, x, y, params){
+    if(this.total_entities >= MAX_ENTITIES){
+      return null;
+    }
+
+    const entity = this.entities[this.total_entities] = new entity_type(this, x, y)
+    ++this.total_entities;
+    return entity;
+  };
+
   init(){
     // Initialize Canvas
     this.canvas = document.getElementById("game");
@@ -384,19 +421,14 @@ class Game{
 
       levels_queue.then(e => {
         // Initialize player
-        this.entities[0] = new Player(-300, -140, this);
-        if(true){
-          for(let i = 1; i < 10; ++i){
-            this.entities[i] = new Slime(
-              (Math.random() * 2 - 1) * 800, 
-              (Math.random() * 2 - 1) * 800, 
-              this);
+        this.append_entity(Player, -300, -140);
+        this.append_entity(Player, -300, -140);
+        if(false){
+          for(let i = 0; i < 10; ++i){
+            this.append_entity(Slime, (Math.random() * 2 - 1) * 800, -140, 0);
           }
-          for(let i = 10; i < 20; ++i){
-            this.entities[i] = new Enemy1(
-              (Math.random() * 2 - 1) * 800, 
-              (Math.random() * 2 - 1) * 800, 
-              this);
+          for(let i = 0; i < 10; ++i){
+            this.append_entity(Enemy1, (Math.random() * 2 - 1) * 800, -140, 0);
           }
         }
         this.camera.lookAt(this.entities[0]);

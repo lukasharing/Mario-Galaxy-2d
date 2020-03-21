@@ -5,6 +5,11 @@
     "height": 36,
     "frames": 5
   },
+  "bullets": {
+    "src": "bullets.png",
+    "width": 19,
+    "height": 19
+  },
   "tiles": {
     "src": "tiles.png",
     "width": 32,

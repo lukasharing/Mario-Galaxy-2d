@@ -1,13 +1,15 @@
 class Entity extends Shape{
 
-	constructor(_x, _y, _w, _h){
+	constructor(_game, _x, _y, _w, _h){
 		super(_x, _y)
 		super.rectangle(_w, _h);
+		this.game = _game;
 		this.velocity = new Vector(0.01, 0.01);
 
 		// Gfx
 		this.sprite = null;
-		this.gfx_id = 0;
+		this.gfx_x = 0;
+		this.gfx_y = 0;
 		this.gfx_frame = 0;
 
 		// Physics
@@ -20,9 +22,17 @@ class Entity extends Shape{
 		this.friction = 0.98;
 
 		// Direction
+		this.x_last_dir = 0;
 		this.x_direction = 0;
 		this.y_direction = 0;
+
+		// Common Properties
+		this.life = 100;
+		this.max_life = 100;
+		this.healing_time = 0;
 	};
+	
+	get alive(){ return this.life > 0; };
 
 	move_left(force = 1.0){
 		this.velocity = this.velocity.add(this.coordSystem[0].scale(force));
@@ -42,17 +52,18 @@ class Entity extends Shape{
 
 	draw(ctx){
 		
+		this.x_last_dir = Math.abs(this.x_direction) < EPSILON ?  this.x_last_dir : -Math.sign(this.x_direction)
 		this.x_direction = this.coordSystem[0].dot(this.velocity);
 		this.y_direction = this.coordSystem[1].dot(this.velocity);
 
 		ctx.save();
 			ctx.translate(this.position.x, this.position.y);
 			ctx.rotate(this.rotation);
-			ctx.scale(-Math.sign(this.x_direction), 1.0);
+			ctx.scale(this.x_last_dir, 1.0);
 			ctx.drawImage(
 				this.sprite.image,
-				this.gfx_id * this.sprite.size.x,
-				0.0,
+				this.gfx_x * this.sprite.size.x,
+				this.gfx_y * this.sprite.size.y,
 				this.sprite.size.x,
 				this.sprite.size.y,
 				-(this.sprite.size.x >> 1),
@@ -71,7 +82,7 @@ class Entity extends Shape{
 			friction = 0.75; // Friction on the floor
 		}else{
 			// On the air
-			friction = Math.sign(this.coordSystem[1].dot(this.velocity)) > 0 ? 0.9 : 0.99;
+			friction = Math.sign(this.coordSystem[1].dot(this.velocity)) > 0 ? 0.9 : 0.93;
 		}
 
 		// Rotating the collision Box
@@ -89,14 +100,15 @@ class Entity extends Shape{
 		// 1. Simulate Fake Gravity ()
 		this.position = this.position.add(last_velocity_state);
 		const intersect_shapes = this.intersect_shapes(game.floor);
+		this.isTouchingFloor = false;
+
 		if(intersect_shapes.length > 0){
-			this.isTouchingFloor = false;
 			intersect_shapes.forEach(e => {
 				this.position = this.position.add(e.repulsive_force);
 				this.isTouchingFloor |= e.repulsive_force.normalize().dot(this.coordSystem[1]) > 0.0;
 			});
 
-			this.objectOver = intersect_shapes[0].body.parent !== null ? intersect_shapes[0].body.parent : intersect_shapes[0].body;
+			this.objectOver = intersect_shapes[0].body;
 		}else{
 			// The object who has the biggest attractive force will be our "planet"
 			this.objectOver = game.force_in_point(this.position).body;
@@ -117,6 +129,9 @@ class Entity extends Shape{
 			let ds = vr.subtract(vb);
 			this.position = this.position.add(ds);
 		}
+
+		// Keep always the parent as gravitating object
+		this.objectOver = this.objectOver.parent !== null ? this.objectOver.parent : this.objectOver;
 
 		// If there exist a segment where the "player's shadows" cast over from the element we are gravitating,
 		// The vector of the segment and its perpendicular will be our system coordinate

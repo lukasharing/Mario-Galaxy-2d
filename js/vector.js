@@ -5,6 +5,14 @@ class Vector {
     this.z = _z;
   }
 
+  // Permutations
+  get xy(){ return new Vector(this.x, this.y, 0.0); }
+  get yx(){ return new Vector(this.x, this.y, 0.0); }
+  get xz(){ return new Vector(this.x, 0.0, this.z); }
+  get zx(){ return new Vector(this.x, 0.0, this.z); }
+  get yz(){ return new Vector(0.0, this.y, this.z); }
+  get zy(){ return new Vector(0.0, this.y, this.z); }
+
   // GETTER / SETTER
   get length(){ return Math.sqrt(this.dot(this)); };
   get alpha(){ return PI - Math.atan2(-this.y, -this.x); };
@@ -21,7 +29,8 @@ class Vector {
   mid(_v){ return new Vector((this.x + _v.x) / 2, (this.y + _v.y) / 2, (this.z + _v.z) / 2); };
   rotate(a){ let c = Math.cos(a), s = Math.sin(a); return new Vector(c * this.x - s * this.y, s * this.x + c * this.y, this.z); };
   clamp(a){ return this.length < a ? this : this.normalize().scale(a); };
-  
+  mix(v, t){ return new Vector(mix(this.x, v.x, t), mix(this.y, v.y, t), mix(this.z, v.z, t)); }
+
   draw(ctx, x = 0.0, y = 0.0){
     let a = Math.atan2(this.y, this.x);
     let l = this.length;

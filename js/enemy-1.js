@@ -1,7 +1,7 @@
 class Enemy1 extends Enemy{
 
-	constructor(_x, _y){
-		super(_x, _y, 15, 16);
+	constructor(_game, _x, _y){
+		super(_game, _x, _y, 15, 16);
 
 		// Gfx
 		this.sprite = game.sprites["enemy-1"];
@@ -17,7 +17,7 @@ class Enemy1 extends Enemy{
 	update(dt, game){
 
 		this.gfx_frame += 0.1;
-		this.gfx_id = Math.floor(this.gfx_frame) % 3;
+		this.gfx_x = Math.floor(this.gfx_frame) % 3;
 
 		this.decision_moving += 0.1;
 		if(this.decision_moving > this.decision_change){

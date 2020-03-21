@@ -9,8 +9,13 @@ window.onload = ()=>{
     game.key_press(e.keyCode);
   });
   window.addEventListener("keyup", e=>game.key_unpress(e.keyCode));
+
+  let c = 0;
   window.addEventListener("click", e=>{
-    game.entities[0].collision.position = game.entities[0].position.subtract(game.entities[0].coordSystem[1]);
+    
+    game.camera.lookAt(game.entities[(++c) & 1]);
+
+    //game.entities[0].collision.position = game.entities[0].position.subtract(game.entities[0].coordSystem[1]);
   });
   window.addEventListener("resize", e=>game.resize());
   window.addEventListener("touchstart", e=>game.touch_start(e.targetTouches));

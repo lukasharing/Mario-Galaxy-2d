@@ -10,6 +10,7 @@ const DEG2PI = 360 / TAU;
 const mix = (a, b, k) => a * (1 - k) + k * b;
 const lerp = (a, b, c, d) => (a - b) / (c - d) * d + c;
 const step = (a, b, c) => c < 0.5 ? a : b;
+const clamp = (v, a, b) => Math.max(Math.min(v, 1.), 0.);
 
 // Angles
 const positive_radians = (a) => ((a % TAU) + TAU) % TAU; 

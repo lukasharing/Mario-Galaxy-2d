@@ -25,29 +25,22 @@
     "floors" : [
       {
         "position": [0, 0],
-        "type": "rectangle",
+        "type": "shape",
         "rotation": 0.0,
-        "width": 100,
-        "height": 100,
+        "radius": 100,
+        "sides": 6,
         "children": [
           {
-            "position": [100, -200],
+            "position": [-100, -300],
             "type": "shape",
-            "rotation": 0.01,
+            "rotation": 0.0,
             "radius": 100,
-            "sides": 3
-          },
-          {
-            "position": [-100, 200],
-            "type": "shape",
-            "rotation": 0.01,
-            "radius": 100,
-            "sides": 4
+            "sides": 5
           }
         ]
       },
       {
-        "position": [-200, -600],
+        "position": [-200, -700],
         "type": "shape",
         "rotation": 0.0,
         "radius": 100,
@@ -55,12 +48,28 @@
         "children": []
       },
       {
-        "position": [150, 450],
+        "position": [-450, 250],
         "type": "shape",
-        "rotation": 0.0,
-        "radius": 100,
-        "sides": 6,
+        "rotation": 0.01,
+        "radius": 200,
+        "sides": 4,
         "children": []
+      },
+      {
+        "position": [0, -700],
+        "type": "rectangle",
+        "rotation": 0.0,
+        "width": 700,
+        "height": 300,
+        "children": [
+          {
+            "position": [70, 300],
+            "type": "shape",
+            "rotation": 0.01,
+            "radius": 100,
+            "sides": 6
+          }
+        ]
       }
     ]
   }
