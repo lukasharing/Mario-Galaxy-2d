@@ -115,7 +115,7 @@ class Floor extends Shape{
     ctx.restore();
   };
 
-  update(){
+  update(dt){
     let angular = this.angular_velocity;
 
     if(this.parent instanceof Shape){
@@ -123,7 +123,7 @@ class Floor extends Shape{
     }
 
     if(angular != 0.0){
-      this.rotate(angular);
+      this.rotate(angular * dt);
     }
   };
 }

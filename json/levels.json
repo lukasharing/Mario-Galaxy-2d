@@ -29,18 +29,10 @@
         "rotation": 0.0,
         "radius": 100,
         "sides": 6,
-        "children": [
-          {
-            "position": [-100, -300],
-            "type": "shape",
-            "rotation": 0.0,
-            "radius": 100,
-            "sides": 5
-          }
-        ]
+        "children": []
       },
       {
-        "position": [-200, -700],
+        "position": [-200, -300],
         "type": "shape",
         "rotation": 0.0,
         "radius": 100,

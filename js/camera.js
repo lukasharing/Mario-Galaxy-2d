@@ -6,11 +6,11 @@ class Camera{
 
     this.lookingAt = null;
 
-    // Transformation Vec3 ( Position[x,y] , Rotation )
-    this.from_transformation = new Vector();
-    this.transformation = new Vector();
-    this.transformation_speed = 2.5;
-    this.transformation_time = 0.0;
+    this.position = new Vector();
+    this.velocity = new Vector();
+
+    this.rotation = 0;
+    this.rotation_velocity = 0.0;
     
     this.camera_hsize = new Vector();
   };
@@ -19,41 +19,26 @@ class Camera{
     this.camera_hsize = new Vector(this.game.width >> 1, this.game.height >> 1);
   };
 
-  get position(){ return this.transformation.xy; };
-  get rotation(){ return this.transformation.z; };
-
   lookAt(_entity){
     this.lookingAt = _entity;
-    this.transformation = new Vector(_entity.position.x, _entity.position.y, _entity.rotation);
   };
 
   update(dt){
 
-    const ctransformation = new Vector(this.lookingAt.position.x, this.lookingAt.position.y, this.lookingAt.rotation);
-    const dtransformation = ctransformation.subtract(this.from_transformation);
-    
-    // Check If there is a shortes path (from the other side)
-    if(Math.abs(dtransformation.z) > PI){
-      dtransformation.z -= Math.sign(dtransformation.z) * TAU;
-    }
-
-    let dvl = dtransformation.length;
-    if(dvl > EPSILON){
-      this.transformation_time += 0.1;
-
-      let speed = dvl < 1.0 ? this.transformation_time : this.transformation_speed;
-
-      let t = this.transformation_time / speed;
-      // Camera Interpolation
-      t = t * t * (3 - 2 * t);
-
-      this.transformation = this.from_transformation.add(dtransformation.scale(t));
-    
-      if(t >= 1.0){
-        this.from_transformation = this.transformation;
-        this.transformation_time = 0.0;
+    if(this.lookingAt !== null){
+      this.velocity = this.lookingAt.position.subtract(this.position);
+      let dr = this.lookingAt.rotation - this.rotation;
+      //console.log(dr);
+      if(Math.abs(dr) >= Math.PI){
+        dr = dr - 2 * Math.PI;
       }
+      this.rotation_velocity = dr * 0.80;
     }
+
+    this.position = this.position.add(this.velocity.scale(dt));
+    this.velocity = this.velocity.scale(0.98).scale(dt);
+    this.rotation += this.rotation_velocity * dt;
+    this.rotation_velocity = this.rotation_velocity * 0.98 * dt;
   };
 
   draw_gui(ctx){

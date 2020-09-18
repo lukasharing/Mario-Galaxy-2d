@@ -52,17 +52,17 @@ class Game{
     if(this.entities[0].coordSystem[0] !== null){
       if(this.keys[37] > 0){ // Left
         ++this.keys[37];
-        this.entities[0].move_left(1.);
+        this.entities[0].move_left(10.);
       }
 
       if(this.keys[39] > 0){
         ++this.keys[39];
-        this.entities[0].move_right(1.);
+        this.entities[0].move_right(10.);
       }
 
       if(this.keys[38] > 0){
         ++this.keys[38];
-        this.entities[0].jump(30.);
+        this.entities[0].jump(300.);
       }
       
       if(this.keys[32] > 0){
@@ -76,17 +76,17 @@ class Game{
     if(true){
       if(this.keys[65] > 0){ // Left
         ++this.keys[65];
-        this.entities[1].move_left(1.);
+        this.entities[1].move_left(10.);
       }
       
       if(this.keys[68] > 0){
         ++this.keys[68];
-        this.entities[1].move_right(1.);
+        this.entities[1].move_right(10.);
       }
 
       if(this.keys[87] > 0){
         ++this.keys[87];
-        this.entities[1].jump(30.);
+        this.entities[1].jump(300.);
       }
     }
   };
@@ -177,7 +177,7 @@ class Game{
       }
     });
 
-    this.camera.update();
+    this.camera.update(dt);
   };
 
   render(){
@@ -217,10 +217,10 @@ class Game{
       this.fps = 1000 / (time - this.last_time);
       this.last_time = time;
 
-      const dt = this.fps / 1000;
       this.controller();
 
       // Game Updates
+      const dt = this.fps / 1000;
       this.update(dt);
       this.render();
 

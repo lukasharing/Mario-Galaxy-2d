@@ -5,6 +5,7 @@ class Entity extends Shape{
 		super.rectangle(_w, _h);
 		this.game = _game;
 		this.velocity = new Vector(0.01, 0.01);
+		this.acceleration = new Vector(0.0, 0.0);
 
 		// Gfx
 		this.sprite = null;
@@ -43,6 +44,7 @@ class Entity extends Shape{
 	};
 
 	jump(factor = 20.0){
+		console.log(factor);
 		if(this.isJumping < 0){
 			this.isTouchingFloor = false;
 			this.isJumping = 4;
@@ -74,7 +76,7 @@ class Entity extends Shape{
 		ctx.restore();
 	};
 
-	update(dt, game){
+	update(dt){
 		let friction = 0.0;
 		// If the floor is being touched
 		if(this.isTouchingFloor){
@@ -91,43 +93,43 @@ class Entity extends Shape{
 		if(Math.abs(df) > EPSILON){ this.rotate(df); }
 
 		/* Update Forces */
-		// Friction interaction
-		this.velocity = this.velocity.scale(friction);
-		// Add Gravity
-		let last_velocity_state = this.velocity.subtract(this.coordSystem[1]);
+		let gravity_vector = this.coordSystem[1].scale(-0.98 * 100.0);
+		this.position = this.position.add(this.velocity.scale(dt));
+		this.velocity = this.velocity.scale(friction).add(gravity_vector.scale(dt));
 
 		// Get all intersections
-		// 1. Simulate Fake Gravity ()
-		this.position = this.position.add(last_velocity_state);
-		const intersect_shapes = this.intersect_shapes(game.floor);
+		const intersect_shapes = this.intersect_shapes(this.game.floor);
 		this.isTouchingFloor = false;
 
 		if(intersect_shapes.length > 0){
-			intersect_shapes.forEach(e => {
-				this.position = this.position.add(e.repulsive_force);
-				this.isTouchingFloor |= e.repulsive_force.normalize().dot(this.coordSystem[1]) > 0.0;
+			// TEST: objectOver should be the object who which the player needs to be pushed furthest away
+			let collision_forces = new Vector();
+			let rotation_angle = 0.0;
+			intersect_shapes.forEach(collided => {
+				collision_forces = collision_forces.add(collided.repulsive_force);
+				if(collided.repulsive_force.normalize().dot(this.coordSystem[1]) > 0.0){
+					this.isTouchingFloor = true;
+					// Conservation of momentum, object placed on top of other should rotate together
+					if(collided.body.angular_velocity != 0.0){
+						// Vector Center of entity to the center of the planet
+						let vb = this.position.subtract(collided.body.position);
+						// Rotate Vector To the new position
+						let vr = vb.rotate(collided.body.angular_velocity);
+						// Calculate Rotation Displacement
+						let ds = vr.subtract(vb);
+						// Add to delta "changes"
+						rotation_angle += collided.body.angular_velocity;
+						collision_forces = collision_forces.add(ds);
+					}
+				}
 			});
 
+			this.rotate(rotation_angle * dt);
+			this.position = this.position.add(collision_forces);
 			this.objectOver = intersect_shapes[0].body;
 		}else{
 			// The object who has the biggest attractive force will be our "planet"
-			this.objectOver = game.force_in_point(this.position).body;
-		}
-		// 2. Remove Gravity Simulation
-		this.position = this.position.subtract(last_velocity_state);
-
-		// 3. Apply Real Gravity
-		this.velocity = last_velocity_state;
-		this.position = this.position.add(this.velocity);
-
-		// Conservation of momentum, object placed on top of other should rotate together
-		// TODO: Check if set this.objectOver = first floor.
-		if(this.objectOver.angular_velocity != 0.0){
-			this.rotate(this.objectOver.angular_velocity);
-			let vb = new Vector(this.position.x - this.objectOver.position.x, this.position.y - this.objectOver.position.y);
-			let vr = vb.rotate(this.objectOver.angular_velocity);
-			let ds = vr.subtract(vb);
-			this.position = this.position.add(ds);
+			this.objectOver = this.game.force_in_point(this.position).body;
 		}
 
 		// Keep always the parent as gravitating object
@@ -135,7 +137,7 @@ class Entity extends Shape{
 
 		// If there exist a segment where the "player's shadows" cast over from the element we are gravitating,
 		// The vector of the segment and its perpendicular will be our system coordinate
-		let new_coord = game.nearest_side(this.position, this.objectOver); // Get the ID.
+		let new_coord = this.game.nearest_side(this.position, this.objectOver); // Get the ID.
 
 		if(new_coord >= 0){ // If we find
 			this.coordSystem[1] = this.objectOver.normals[new_coord];
