@@ -44,8 +44,8 @@ class Enemy extends Entity{
 
   };
 
-  update(dt, game){
-    super.update(dt, game);
+  update(dt){
+    super.update(dt);
     
     //this.damage(0.1);
 

@@ -44,7 +44,6 @@ class Entity extends Shape{
 	};
 
 	jump(factor = 20.0){
-		console.log(factor);
 		if(this.isJumping < 0){
 			this.isTouchingFloor = false;
 			this.isJumping = 4;

@@ -149,9 +149,9 @@ class Game{
   touch_controller(){
 
     switch(this.id_touch){
-      case 0: this.entities[0].move_right(1.);  break;
-      case 1: this.entities[0].jump(30.);  break;
-      case 2: this.entities[0].move_left(1.); break; 
+      case 0: this.entities[0].move_right(10.);  break;
+      case 1: this.entities[0].jump(300.);  break;
+      case 2: this.entities[0].move_left(10.); break; 
     }
 
   };
@@ -214,14 +214,14 @@ class Game{
     if(delta > this.max_frames){
 
       this.last_frame = now - (delta % this.max_frames);
-      this.fps = 1000 / (time - this.last_time);
+      const dt = (time - this.last_time);
+      this.fps = 1000 / dt;
       this.last_time = time;
 
       this.controller();
 
       // Game Updates
-      const dt = this.fps / 1000;
-      this.update(dt);
+      this.update(1./dt);
       this.render();
 
     }
@@ -423,7 +423,7 @@ class Game{
         // Initialize player
         this.append_entity(Player, -300, -140);
         this.append_entity(Player, -300, -140);
-        if(false){
+        if(true){
           for(let i = 0; i < 10; ++i){
             this.append_entity(Slime, (Math.random() * 2 - 1) * 800, -140, 0);
           }
