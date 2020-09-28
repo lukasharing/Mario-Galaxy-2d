@@ -11,6 +11,12 @@ const VECTOR_B = new Vector(0, 1);
 const SINGLE_TOUCH_MS = 80.0;
 const TOUCH_RADIUS_EFFECT = 50.0;
 
+// KEYS
+const KEYS = {
+  LEFT: 37,
+  RIGHT: 39,
+  SPACE: 32
+}
 
 class Game{
   constructor(){
@@ -50,13 +56,13 @@ class Game{
 
   key_controller(){
     if(this.entities[0].coordSystem[0] !== null){
-      if(this.keys[37] > 0){ // Left
-        ++this.keys[37];
+      if(this.keys[KEYS.LEFT] > 0){ // Left
+        ++this.keys[KEYS.LEFT];
         this.entities[0].move_left(10.);
       }
 
-      if(this.keys[39] > 0){
-        ++this.keys[39];
+      if(this.keys[KEYS.RIGHT] > 0){
+        ++this.keys[KEYS.RIGHT];
         this.entities[0].move_right(10.);
       }
 
@@ -65,8 +71,8 @@ class Game{
         this.entities[0].jump(300.);
       }
       
-      if(this.keys[32] > 0){
-        ++this.keys[32];
+      if(this.keys[KEYS.SPACE] > 0){
+        ++this.keys[KEYS.SPACE];
         this.entities[0].shoot(20.);
         //this.entities[0].attack(20.);
       }
@@ -423,7 +429,7 @@ class Game{
         // Initialize player
         this.append_entity(Player, -300, -140);
         this.append_entity(Player, -300, -140);
-        if(true){
+        if(false){
           for(let i = 0; i < 10; ++i){
             this.append_entity(Slime, (Math.random() * 2 - 1) * 800, -140, 0);
           }

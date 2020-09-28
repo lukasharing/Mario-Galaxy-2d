@@ -61,18 +61,34 @@ class Entity extends Shape{
 			ctx.translate(this.position.x, this.position.y);
 			ctx.rotate(this.rotation);
 			ctx.scale(this.x_last_dir, 1.0);
+			ctx.translate(-(this.sprite.size.x >> 1), -(this.sprite.size.y >> 1));
 			ctx.drawImage(
 				this.sprite.image,
 				this.gfx_x * this.sprite.size.x,
 				this.gfx_y * this.sprite.size.y,
 				this.sprite.size.x,
 				this.sprite.size.y,
-				-(this.sprite.size.x >> 1),
-				-(this.sprite.size.y >> 1),
+				0,
+				0,
 				this.sprite.size.x,
 				this.sprite.size.y
 			);
+			// Debug
+			if(true){
+				ctx.strokeStyle = "red";
+				ctx.strokeRect(
+					0,
+					0,
+					this.sprite.size.x,
+					this.sprite.size.y,
+				);
+			}
+			
 		ctx.restore();
+	};
+
+	attack(){
+		
 	};
 
 	update(dt){
